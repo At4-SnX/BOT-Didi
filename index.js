@@ -135,4 +135,4 @@ client.on("channelCreate", async (channel) => {
   }, 4000);
 });
 
-client.login("MTQ5NTU3ODI2OTE0MjA4OTczOA.GgtG6K.Cs1mnpR2v-2SMeRd84mvkL01IwKcYXYIziBxTg");
+client.login(process.env.TOKEN);
