@@ -1138,14 +1138,27 @@ client.on("ready", async () => {
 });
 
 // ======================================================
-// 🟣 BLOC 6 — ARRIVÉES & DÉPARTS (SALONS SÉPARÉS)
+// 🟣 BLOC 6 — ARRIVÉES & DÉPARTS (SALONS SÉPARÉS + PING + GIF + DURÉE)
 // ======================================================
 
 // Salon d'arrivée
-const JOIN_CHANNEL_ID = "1472639359311413441"; // 🔧 Mets ici le salon d'arrivées
+const JOIN_CHANNEL_ID = "1472639359311413441";
 
 // Salon de départ
-const LEAVE_CHANNEL_ID = "1472639378202558646"; // 🔧 Mets ici le salon de départs
+const LEAVE_CHANNEL_ID = "1472639378202558646";
+
+// GIF Nancy RP
+const NANCY_GIF = "https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/NANCY_RP_4.gif";
+
+// Fonction pour calculer la durée sur le serveur
+function formatDuration(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+  return `${days}j ${hours}h ${minutes}m`;
+}
 
 // ======================================================
 // 🟣 ARRIVÉE D’UN MEMBRE
@@ -1164,32 +1177,48 @@ client.on("guildMemberAdd", async (member) => {
       `🌺 Nous te souhaitons une excellente expérience sur le serveur.`
     )
     .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+    .setImage(NANCY_GIF)
     .setFooter(FOOTER)
     .setTimestamp();
 
-  channel.send({ embeds: [embed] });
+  channel.send({
+    content: `<@${member.id}>`,
+    embeds: [embed]
+  });
 });
 
 // ======================================================
-// 🔮 DÉPART D’UN MEMBRE
+// 🔮 DÉPART D’UN MEMBRE (AVEC DURÉE SUR LE SERVEUR)
 // ======================================================
 
 client.on("guildMemberRemove", async (member) => {
   const channel = member.guild.channels.cache.get(LEAVE_CHANNEL_ID);
   if (!channel) return;
 
+  // Calcul de la durée passée sur le serveur
+  let durationText = "Durée inconnue";
+  if (member.joinedAt) {
+    const duration = Date.now() - member.joinedAt.getTime();
+    durationText = formatDuration(duration);
+  }
+
   const embed = new EmbedBuilder()
     .setColor(COLOR_ERROR)
     .setTitle("🛑 Départ d’un membre")
     .setDescription(
       `🔮 **${member.user.username}** a quitté **Nancy RP**.\n\n` +
+      `🕒 **Temps passé sur le serveur :** ${durationText}\n\n` +
       `🟣 Nous lui souhaitons une bonne continuation.`
     )
     .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+    .setImage(NANCY_GIF)
     .setFooter(FOOTER)
     .setTimestamp();
 
-  channel.send({ embeds: [embed] });
+  channel.send({
+    content: `<@${member.id}>`,
+    embeds: [embed]
+  });
 });
 
 // ======================================================
