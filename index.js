@@ -1172,9 +1172,9 @@ client.on("guildMemberAdd", async (member) => {
     .setColor(COLOR_SUCCESS)
     .setTitle("💜 Nouvelle arrivée")
     .setDescription(
-      `🟣 **${member.user.username}** vient de rejoindre **Nancy RP**.\n\n` +
-      `🔮 Bienvenue à toi !\n` +
-      `🌺 Nous te souhaitons une excellente expérience sur le serveur.`
+      `🌺 ***${member.user.username}** vient de rejoindre **Nancy RP***.\n\n` +
+      `- **Bienvenue à toi !**\n` +
+      `🌺 *Nous te souhaitons une excellente expérience sur le serveur*.`
     )
     .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
     .setImage(NANCY_GIF)
@@ -1206,9 +1206,9 @@ client.on("guildMemberRemove", async (member) => {
     .setColor(COLOR_ERROR)
     .setTitle("🛑 Départ d’un membre")
     .setDescription(
-      `🔮 **${member.user.username}** a quitté **Nancy RP**.\n\n` +
-      `🕒 **Temps passé sur le serveur :** ${durationText}\n\n` +
-      `🟣 Nous lui souhaitons une bonne continuation.`
+      `🌺 ***${member.user.username}** a quitté **Nancy RP***.\n\n` +
+      `- **Temps passé sur le serveur :** ${durationText}\n\n` +
+      `🌺 *Nous lui souhaitons une bonne continuation*.`
     )
     .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
     .setImage(NANCY_GIF)
