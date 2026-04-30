@@ -1138,8 +1138,64 @@ client.on("ready", async () => {
 });
 
 // ======================================================
+// 🟣 BLOC 6 — ARRIVÉES & DÉPARTS (SALONS SÉPARÉS)
+// ======================================================
+
+// Salon d'arrivée
+const JOIN_CHANNEL_ID = "1472639359311413441"; // 🔧 Mets ici le salon d'arrivées
+
+// Salon de départ
+const LEAVE_CHANNEL_ID = "1472639378202558646"; // 🔧 Mets ici le salon de départs
+
+// ======================================================
+// 🟣 ARRIVÉE D’UN MEMBRE
+// ======================================================
+
+client.on("guildMemberAdd", async (member) => {
+  const channel = member.guild.channels.cache.get(JOIN_CHANNEL_ID);
+  if (!channel) return;
+
+  const embed = new EmbedBuilder()
+    .setColor(COLOR_SUCCESS)
+    .setTitle("💜 Nouvelle arrivée")
+    .setDescription(
+      `🟣 **${member.user.username}** vient de rejoindre **Nancy RP**.\n\n` +
+      `🔮 Bienvenue à toi !\n` +
+      `🌺 Nous te souhaitons une excellente expérience sur le serveur.`
+    )
+    .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+    .setFooter(FOOTER)
+    .setTimestamp();
+
+  channel.send({ embeds: [embed] });
+});
+
+// ======================================================
+// 🔮 DÉPART D’UN MEMBRE
+// ======================================================
+
+client.on("guildMemberRemove", async (member) => {
+  const channel = member.guild.channels.cache.get(LEAVE_CHANNEL_ID);
+  if (!channel) return;
+
+  const embed = new EmbedBuilder()
+    .setColor(COLOR_ERROR)
+    .setTitle("🛑 Départ d’un membre")
+    .setDescription(
+      `🔮 **${member.user.username}** a quitté **Nancy RP**.\n\n` +
+      `🟣 Nous lui souhaitons une bonne continuation.`
+    )
+    .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+    .setFooter(FOOTER)
+    .setTimestamp();
+
+  channel.send({ embeds: [embed] });
+});
+
+// ======================================================
 // 🔑 LOGIN FINAL
 // ======================================================
 
 client.login(process.env.TOKEN);
+
 
