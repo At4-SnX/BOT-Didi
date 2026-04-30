@@ -41,7 +41,14 @@ const FOUNDATION_ROLE_ID = "1472661671972442387";
 const PREFIX = "n.";
 
 // Whitelist bots
-const BOT_WHITELIST = [];
+const BOT_WHITELIST = [
+  "466578580449525760",
+  "614755681936867328",
+  "1184200228266573854",
+  "1475133951625658551",
+  "318312854816161792"
+];
+
 
 // Tickets catégories
 const categories = {
@@ -537,10 +544,27 @@ client.on("messageCreate", async (message) => {
   // ======================================================
   // 🟡 n.raidsim
   // ======================================================
-  if (cmd === "raidsim") {
-    const embed = embedRaidAlert(true);
-    return message.channel.send({ embeds: [embed] });
+if (cmd === "raidsim") {
+  const embed = embedRaidAlert(true);
+
+  // Envoi dans le salon actuel
+  await message.channel.send({ embeds: [embed] });
+
+  // Envoi dans le salon d’annonce
+  const announce = message.guild.channels.cache.get(ANNOUNCE_CHANNEL_ID);
+  if (announce) {
+    await announce.send({
+      embeds: [
+        embedInfo(
+          "Simulation RAID — Notification",
+          "🟡 Une **simulation de RAID** vient d’être effectuée.\nAucune action réelle n’a été appliquée."
+        )
+      ]
+    });
   }
+
+  return;
+}
 
   // ======================================================
   // 🤖 n.antibot
