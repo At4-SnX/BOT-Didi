@@ -56,7 +56,8 @@ const categories = {
   "1488679203590373557": "unban",
   "1488681903006421172": "partenariat",
   "1488681966990528593": "autre",
-  "1488683247998079006": "report_joueur"
+  "1488683247998079006": "report_joueur",
+  "1495810265474928732": "fondation"
 };
 
 // États internes
@@ -232,11 +233,10 @@ async function restoreServer(guild, snapshot) {
 }
 
 // ======================================================
-// 🟣 TICKETS — FORMULAIRES PREMIUM ULTRA VIOLET LUXE
+// 🟣 TICKETS — VERSION SANS EMBEDS (MESSAGES ESTHÉTIQUES)
 // ======================================================
 
 client.on("channelCreate", async (channel) => {
-  // On attend 2 secondes pour laisser Discord créer le salon
   setTimeout(async () => {
     if (!channel.parentId) return;
 
@@ -244,129 +244,218 @@ client.on("channelCreate", async (channel) => {
     if (!type) return;
 
     let message = "";
-    let title = "";
 
     switch (type) {
+
+      // ======================================================
+      // 🔮 SIGNALEMENT STAFF
+      // ======================================================
       case "report_staff":
-        title = "🔮 Signalement Staff — Formulaire Officiel";
         message = `
-🟣 **Ce formulaire est destiné aux joueurs souhaitant signaler un membre du staff.**
-Merci de remplir ce formulaire avec sérieux.  
-Les signalements abusifs ou incomplets ne seront pas traités.
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔮 **FORMULAIRE — SIGNALEMENT STAFF**
+━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-💜 **Identité du Staff (pseudo) :**  
-*(Nom du staff concerné)*
+🟣 Merci de remplir ce formulaire avec sérieux.  
+Les signalements abusifs ne seront pas traités.
 
-🕒 **Date et heure du problème :**  
-*(Exemple : 15/03/2026 — 22h40)*
+💜 **Identité du Staff :**  
+> *(Nom du staff concerné)*
 
-🔮 **Lieu ou contexte du problème :**  
-*(Scène en cours, intervention staff, ticket, vocal…)*
+🕒 **Date & Heure :**  
+> *(Exemple : 15/03/2026 — 22h40)*
 
-📄 **Description complète du problème :**  
-*(Explique clairement ce qu’il s’est passé, les décisions prises, ton ressenti, etc.)*
+📍 **Contexte :**  
+> *(Scène, intervention staff, vocal, ticket…)*
 
-📎 **Preuves (screen, vidéo, logs) :**  
-*(Lien ou fichiers à joindre — obligatoire si possible)*
+📄 **Description complète :**  
+> *(Explique clairement ce qu’il s’est passé)*
+
+📎 **Preuves :**  
+> *(Screens, vidéos, logs — obligatoire si possible)*
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/NANCY_RP_4.gif
+━━━━━━━━━━━━━━━━━━━━━━━━━━
         `;
         break;
 
+      // ======================================================
+      // 🔮 DEMANDE D'UNBAN
+      // ======================================================
       case "unban":
-        title = "🔮 Demande d’Unban — Formulaire Officiel";
         message = `
-🟣 **Vous avez ouvert ce ticket pour faire une demande d’unban.**  
-Merci de fournir les informations nécessaires.
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔮 **FORMULAIRE — DEMANDE D'UNBAN**
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟣 Merci de fournir les informations nécessaires.
 
 💜 **Identité (Pseudo IG / ID Roblox) :**  
-*(Votre nom en jeu et Identifiant Roblox)*
+> *(Votre nom en jeu + ID Roblox)*
 
 🕒 **Date du bannissement :**  
-*(Indiquez la date approximative si vous ne vous en souvenez plus)*
+> *(Approximative si inconnue)*
 
-📄 **Raison du bannissement (si connue) :**  
-*(Expliquez ce qui vous a été reproché)*
+📄 **Raison du bannissement :**  
+> *(Ce qui vous a été reproché)*
 
 🔮 **Pourquoi souhaitez-vous être unban ?**  
-*(Expliquez votre démarche, votre remise en question, et ce que vous comptez améliorer)*
+> *(Expliquez votre démarche et votre remise en question)*
 
-📎 **Éléments supplémentaires (optionnel) :**  
-*(Screens, explications, contexte…)*
+📎 **Éléments supplémentaires :**  
+> *(Screens, explications, contexte…)*
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/NANCY_RP_4.gif
+━━━━━━━━━━━━━━━━━━━━━━━━━━
         `;
         break;
 
+      // ======================================================
+      // 🔮 PARTENARIAT
+      // ======================================================
       case "partenariat":
-        title = "🔮 Demande de Partenariat — Nancy RP";
         message = `
-🟣 **Vous avez ouvert ce ticket afin de faire une demande de partenariat.**  
-Merci de lire les conditions avant de poursuivre.
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔮 **FORMULAIRE — DEMANDE DE PARTENARIAT**
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟣 Merci de lire les conditions avant de poursuivre.
 
 💜 **Conditions minimales :**  
-- 150 membres réels minimum  
-- Serveur actif  
-- Présentation claire  
-- Aucun contenu illégal ou NSFW  
+> • 150 membres réels  
+> • Serveur actif  
+> • Présentation claire  
+> • Aucun contenu illégal / NSFW  
 
 🔮 **Engagements attendus :**  
-- Publication de notre annonce  
-- Ajout dans vos partenaires  
-- Respect des valeurs Nancy RP  
+> • Publication de notre annonce  
+> • Ajout dans vos partenaires  
+> • Respect des valeurs Nancy RP  
 
 📄 **Informations à fournir :**  
-🔗 Lien du serveur  
-👥 Nombre de membres  
-📘 Présentation  
-🎯 Motivation  
-📣 Engagements  
+> 🔗 Lien du serveur  
+> 👥 Nombre de membres  
+> 📘 Présentation  
+> 🎯 Motivation  
+> 📣 Engagements  
 
-🔒 **La Fondation analysera votre demande.**
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/NANCY_RP_4.gif
+━━━━━━━━━━━━━━━━━━━━━━━━━━
         `;
         break;
 
+      // ======================================================
+      // 🔮 DEMANDE SPÉCIALE
+      // ======================================================
       case "autre":
-        title = "🔮 Demande Spéciale — Formulaire";
         message = `
-🟣 **Ce formulaire est destiné aux joueurs souhaitant faire une demande spéciale.**
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔮 **FORMULAIRE — DEMANDE SPÉCIALE**
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟣 Merci de préciser votre demande.
 
 💜 **Identité (Pseudo IG) :**  
-🆔 **Identité Discord :**  
-🎯 **Nature de la demande :**  
-📄 **Description complète :**  
-📎 **Documents (si nécessaire) :**  
-🗣️ **As-tu déjà discuté avec un staff ?**
+> *(Votre pseudo)*
 
-🔒 **La Fondation reviendra vers toi.**
+🆔 **Identité Discord :**  
+> *(Votre tag Discord)*
+
+🎯 **Nature de la demande :**  
+> *(Ce que vous souhaitez)*
+
+📄 **Description complète :**  
+> *(Expliquez clairement votre demande)*
+
+📎 **Documents (si nécessaire) :**  
+> *(Screens, fichiers…)*
+
+🗣️ **Avez-vous déjà parlé à un staff ?**  
+> *(Oui / Non)*
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/NANCY_RP_4.gif
+━━━━━━━━━━━━━━━━━━━━━━━━━━
         `;
         break;
 
+      // ======================================================
+      // 🔮 SIGNALEMENT JOUEUR
+      // ======================================================
       case "report_joueur":
-        title = "🔮 Signalement Joueur — Formulaire Officiel";
         message = `
-🟣 **Ce formulaire est destiné aux joueurs souhaitant signaler un autre joueur.**
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔮 **FORMULAIRE — SIGNALEMENT JOUEUR**
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟣 Merci de remplir ce formulaire correctement.
 
 💜 **Identité du joueur :**  
-🕒 **Date et heure :**  
+> *(Nom du joueur concerné)*
+
+🕒 **Date & Heure :**  
+> *(Quand cela s’est produit)*
+
 📍 **Lieu :**  
+> *(Zone, scène, contexte)*
+
 📄 **Description :**  
-📎 **Preuves :**
+> *(Explique ce qu’il s’est passé)*
+
+📎 **Preuves :**  
+> *(Screens, vidéos, logs)*
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/NANCY_RP_4.gif
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+        `;
+        break;
+
+      // ======================================================
+      // 🔮 DEMANDE À LA FONDATION (NOUVEAU)
+      // ======================================================
+      case "fondation":
+        message = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔮 **FORMULAIRE — DEMANDE À LA FONDATION**
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟣 Ce ticket est destiné aux demandes importantes nécessitant  
+l’intervention directe de **La Fondation Nancy RP**.
+
+💜 **Identité (Pseudo IG) :**  
+> *(Votre pseudo)*
+
+🆔 **Identité Discord :**  
+> *(Votre tag Discord)*
+
+🎯 **Objet de la demande :**  
+> *(Ce que vous souhaitez obtenir ou faire valider)*
+
+📄 **Description complète :**  
+> *(Expliquez clairement votre situation et votre requête)*
+
+📎 **Documents / Preuves (si nécessaire) :**  
+> *(Screens, fichiers, vidéos…)*
+
+🔒 Votre demande sera étudiée par un membre de la Fondation.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/NANCY_RP_4.gif
+━━━━━━━━━━━━━━━━━━━━━━━━━━
         `;
         break;
     }
 
     if (!message) return;
 
-    const embed = new EmbedBuilder()
-      .setColor(COLOR_MAIN)
-      .setTitle(title)
-      .setDescription(message)
-      .setFooter(FOOTER)
-      .setTimestamp();
-
-    await channel.send({
-      embeds: [embed],
-      content: "https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/NANCY_RP_4.gif"
-    });
+    await channel.send(message);
   }, 2000);
 });
+
 
 // ======================================================
 // 🟣 COMMANDES PREFIX — VERSION PREMIUM ULTRA VIOLET LUXE
@@ -1173,8 +1262,8 @@ client.on("guildMemberAdd", async (member) => {
     .setTitle("💜 Nouvelle arrivée")
     .setDescription(
       `🌺 ***${member.user.username}** vient de rejoindre **Nancy RP***.\n\n` +
-      `- **Bienvenue à toi !**\n` +
-      `🌺 *Nous te souhaitons une excellente expérience sur le serveur*.`
+      `- ***Bienvenue à toi !***\n` +
+      `🌺 *Nous te souhaitons une **excellente expérience sur le serveur***.`
     )
     .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
     .setImage(NANCY_GIF)
@@ -1207,8 +1296,8 @@ client.on("guildMemberRemove", async (member) => {
     .setTitle("🛑 Départ d’un membre")
     .setDescription(
       `🌺 ***${member.user.username}** a quitté **Nancy RP***.\n\n` +
-      `- **Temps passé sur le serveur :** ${durationText}\n\n` +
-      `🌺 *Nous lui souhaitons une bonne continuation*.`
+      `- ***Temps passé sur le serveur :*** ${durationText}\n\n` +
+      `🌺 *Nous lui souhaitons une **bonne continuation***.`
     )
     .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
     .setImage(NANCY_GIF)
