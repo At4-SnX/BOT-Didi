@@ -5,32 +5,32 @@ const {
   PermissionsBitField,
   ChannelType,
   EmbedBuilder,
-  Collection,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle
+  Collection
 } = require("discord.js");
 
 const client = new Client({
-  intents: Object.values(GatewayIntentBits),
-  partials: Object.values(Partials)
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessageReactions
+  ],
+  partials: [Partials.Channel, Partials.Message, Partials.Reaction]
 });
 
-// ================= CONFIG =================
+// ================== CONFIG NANCY RP ==================
 
 const OWNER_ID = "1022469165824606258";
 const ANNOUNCE_CHANNEL_ID = "1472639290163859638";
-const LOG_CHANNEL_ID = "ID_LOGS";
+const GIVEAWAY_ROLE_ID = "1492873377017237618";
+const FOUNDATION_ROLE_ID = "1472661671972442387";
 const PREFIX = "n.";
 
-const WARN_ROLES = [
-  "1472675083339169813",
-  "1472675086741012637",
-  "1472675097771774104"
-];
+// bots whitelist (à compléter si tu as d’autres bots)
+const BOT_WHITELIST = []; // ex: ["123456789012345678"]
 
-const BOT_WHITELIST = [];
-
+// tickets catégories
 const categories = {
   "1488678969472454846": "report_staff",
   "1488679203590373557": "unban",
@@ -39,116 +39,89 @@ const categories = {
   "1488683247998079006": "report_joueur"
 };
 
-// ================= STATE =================
-
-const raidState = new Map();
-const antiBotState = new Map();
-const serverSaves = new Map();
+// états internes
+const raidState = new Map();      // guildId -> { active: bool }
+const antiBotState = new Map();   // guildId -> bool
+const serverSaves = new Map();    // guildId -> snapshot structure
 const giveaways = new Collection();
-const joinTracker = new Map();
-const spamTracker = new Map();
 
-// ================= EMBED =================
+// ================== READY & SLASH COMMANDS ==================
 
-function premiumEmbed({ title, description, color = 0x5865f2 }) {
-  return new EmbedBuilder()
-    .setColor(color)
-    .setTitle(`💠 ${title}`)
-    .setDescription(description)
-    .setFooter({ text: "🌺 Nancy RP • Security Core" })
-    .setTimestamp();
-}
+client.on("ready", async () => {
+  console.log(`Connecté en tant que ${client.user.tag}`);
 
-// ================= LOG =================
+  // Enregistrement des commandes slash (globales)
+  if (!client.application?.commands) return;
 
-async function sendLog(guild, embed) {
-  const ch = guild.channels.cache.get(LOG_CHANNEL_ID);
-  if (ch) ch.send({ embeds: [embed] }).catch(() => {});
-}
-
-// ================= RAID =================
-
-async function sendRaidDMAll(guild) {
-  const channel = guild.systemChannel || guild.channels.cache.find(c => c.isTextBased());
-  if (!channel) return;
-
-  const invite = await channel.createInvite({ maxAge: 0 }).catch(() => null);
-  if (!invite) return;
-
-  const members = await guild.members.fetch();
-
-  for (const [, m] of members) {
-    if (m.user.bot) continue;
-
-    m.send({
-      embeds: [
-        premiumEmbed({
-          title: "🚨 Raid détecté",
-          description: `Rejoins ici si kick : ${invite.url}`,
-          color: 0xff0000
-        })
+  await client.application.commands.set([
+    {
+      name: "help",
+      description: "Affiche l'aide du bot Nancy RP"
+    },
+    {
+      name: "raid",
+      description: "Active le Raid Mode (OWNER uniquement)"
+    },
+    {
+      name: "unraid",
+      description: "Désactive le Raid Mode (OWNER uniquement)"
+    },
+    {
+      name: "raidsim",
+      description: "Simulation de Raid (OWNER uniquement)"
+    },
+    {
+      name: "antibot",
+      description: "Active ou désactive l'anti-bot (OWNER uniquement)",
+      options: [
+        {
+          name: "mode",
+          description: "on / off",
+          type: 3,
+          required: true,
+          choices: [
+            { name: "on", value: "on" },
+            { name: "off", value: "off" }
+          ]
+        }
       ]
-    }).catch(() => {});
-  }
-}
+    },
+    {
+      name: "save",
+      description: "Sauvegarde la structure du serveur (OWNER uniquement)"
+    },
+    {
+      name: "load",
+      description: "Restaure la dernière sauvegarde (OWNER uniquement)"
+    },
+    {
+      name: "giveaway",
+      description: "Créer un giveaway",
+      options: [
+        {
+          name: "durée",
+          description: "Durée en minutes",
+          type: 4,
+          required: true
+        },
+        {
+          name: "récompense",
+          description: "Nom de la récompense",
+          type: 3,
+          required: true
+        }
+      ]
+    }
+  ]);
 
-// ================= ANTI RAID =================
-
-const RAID_THRESHOLD = 5;
-const RAID_INTERVAL = 10000;
-
-client.on("guildMemberAdd", async (member) => {
-  const id = member.guild.id;
-
-  if (!joinTracker.has(id)) joinTracker.set(id, []);
-
-  const now = Date.now();
-  const joins = joinTracker.get(id).filter(t => now - t < RAID_INTERVAL);
-
-  joins.push(now);
-  joinTracker.set(id, joins);
-
-  if (joins.length >= RAID_THRESHOLD) {
-    if (raidState.get(id)?.active) return;
-
-    raidState.set(id, { active: true });
-
-    await sendRaidDMAll(member.guild);
-
-    await sendLog(member.guild, premiumEmbed({
-      title: "🚨 Raid détecté",
-      description: "Activation automatique"
-    }));
-  }
+  console.log("Commandes slash enregistrées.");
 });
 
-// ================= ANTI SPAM =================
+// ================== TICKETS (TON CODE) ==================
 
-client.on("messageCreate", async (msg) => {
-  if (!msg.guild || msg.author.bot) return;
-
-  const id = msg.author.id;
-
-  if (!spamTracker.has(id)) spamTracker.set(id, []);
-
-  const now = Date.now();
-  const msgs = spamTracker.get(id).filter(t => now - t < 5000);
-
-  msgs.push(now);
-  spamTracker.set(id, msgs);
-
-  if (msgs.length >= 5) {
-    await msg.delete().catch(() => {});
-    await msg.member.timeout(5000).catch(() => {});
-
-    await sendLog(msg.guild, premiumEmbed({
-      title: "🧠 Anti-spam",
-      description: `${msg.author} spam détecté`
-    }));
-  }
+client.on("channelCreate", (channel) => {
+  console.log("Nouveau salon détecté :", channel.name, "parent:", channel.parentId);
 });
-
-// ================= TICKETS =================
 
 client.on("channelCreate", async (channel) => {
   setTimeout(async () => {
@@ -157,97 +130,106 @@ client.on("channelCreate", async (channel) => {
     const type = categories[channel.parentId];
     if (!type) return;
 
-    let message = "Formulaire...";
+    let message = "";
 
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId("copy_form")
-        .setLabel("📋 Copier")
-        .setStyle(ButtonStyle.Primary)
-    );
+    switch (type) {
+      case "report_staff":
+        message = `:pushpin: **Ce formulaire est destiné aux joueurs souhaitant signaler un membre du staff.**
+**Merci de remplir ce formulaire avec sérieux.**
+**Les signalements abusifs ou incomplets ne seront pas traités.**
 
-    channel.send({
-      embeds: [premiumEmbed({ title: "Ticket", description: message })],
-      components: [row]
-    });
-  }, 1500);
+:bust_in_silhouette: **Identité du Staff (pseudo) : **
+*(Nom du staff concerné)*
+
+:clock3: **Date et heure du problème : **
+*(Exemple : 15/03/2026 — 22h40)*
+
+:round_pushpin: **Lieu ou contexte du problème : **
+*(Exemple : scène en cours, intervention staff, ticket, vocal…)*
+
+:page_facing_up: **Description complète du problème : **
+*(Explique clairement ce qu’il s’est passé, les décisions prises, ton ressenti, etc.)*
+
+:paperclip: **Preuves (screen, vidéo, logs) : **
+*(Lien ou fichiers à joindre — obligatoire si possible)*`;
+        break;
+
+      case "unban":
+        message = `:pushpin: **Vous avez ouvert ce ticket afin de faire une demande d’unban. Merci de fournir les informations nécessaires afin que votre requête soit étudiée.**
+
+:bust_in_silhouette: **Identité (Pseudo IG / ID Roblox) : **
+*(Votre nom en jeu et Identifiant Roblox)*
+
+:clock3: **Date du bannissement : **
+*(Indiquez la date approximative si vous ne vous en souvenez plus)*
+
+:receipt: **Raison du bannissement (si connue) : **
+*(Expliquez ce qui vous a été reproché)*
+
+:pencil: **Pourquoi souhaitez-vous être unban ? **
+*(Expliquez votre démarche, votre remise en question, et ce que vous comptez améliorer)*
+
+:paperclip: **Éléments supplémentaires (optionnel) : **
+*(Screens, explications, contexte…)*`;
+        break;
+
+      case "partenariat":
+        message = `:pushpin: **Vous avez ouvert ce ticket afin de faire une demande de partenariat.**
+**Merci de prendre connaissance des conditions ci-dessous avant de poursuivre.**
+
+:bookmark_tabs: **Conditions de Partenariat — Nancy RP**
+
+:white_check_mark: Conditions minimales :
+- Le serveur doit compter au minimum 150 membres réels.
+- Le serveur doit être actif.
+- Présentation claire.
+- Aucun contenu illégal ou NSFW.
+
+:arrows_counterclockwise: Engagements attendus :
+- Publication de notre annonce
+- Ajout dans vos partenaires
+- Respect des valeurs
+
+:pencil: **Informations à fournir :**
+:link: Lien du serveur
+:busts_in_silhouette: Nombre de membres
+:receipt: Présentation
+:dart: Motivation
+:mega: Engagements
+
+:lock: **La Fondation analysera votre demande.**`;
+        break;
+
+      case "autre":
+        message = `:pushpin: **Ce formulaire est destiné aux joueurs souhaitant faire une demande spéciale.**
+
+:bust_in_silhouette: **Identité (Pseudo IG) : **
+:id: **Identité Discord : **
+:dart: **Nature de la demande : **
+:pencil: **Description complète : **
+:paperclip: **Documents : **
+:speaking_head: **As-tu déjà discuté avec un staff ?**
+
+:lock: **La Fondation reviendra vers toi.**`;
+        break;
+
+      case "report_joueur":
+        message = `:pushpin: **Ce formulaire est destiné aux joueurs souhaitant signaler un autre joueur.**
+
+:bust_in_silhouette: **Identité du joueur : **
+:clock3: **Date et heure : **
+const { Client, GatewayIntentBits, Partials, Collection } = require("discord.js");
+const fs = require("fs");
+
+const client = new Client({
+  intents: Object.values(GatewayIntentBits),
+  partials: Object.values(Partials)
 });
 
-// ================= PANEL STAFF =================
+client.commands = new Collection();
 
-client.on("messageCreate", async (msg) => {
-  if (!msg.content.startsWith(PREFIX) || msg.author.bot) return;
-
-  const cmd = msg.content.slice(PREFIX.length);
-
-  if (cmd === "panel") {
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId("warn").setLabel("⚠️").setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId("mute").setLabel("🔇").setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId("kick").setLabel("👢").setStyle(ButtonStyle.Danger),
-      new ButtonBuilder().setCustomId("ban").setLabel("🔨").setStyle(ButtonStyle.Danger)
-    );
-
-    msg.channel.send({
-      embeds: [premiumEmbed({ title: "Panel Staff", description: "Actions rapides" })],
-      components: [row]
-    });
-  }
-});
-
-// ================= INTERACTIONS =================
-
-client.on("interactionCreate", async (i) => {
-  if (i.isButton()) {
-
-    if (i.customId === "copy_form") {
-      return i.reply({ content: "📋 Formulaire copié", ephemeral: true });
-    }
-
-    await i.reply({ content: "Mention utilisateur", ephemeral: true });
-
-    const filter = m => m.author.id === i.user.id;
-
-    const collected = await i.channel.awaitMessages({ filter, max: 1, time: 15000 });
-    const msg = collected.first();
-    if (!msg) return;
-
-    const member = msg.mentions.members.first();
-    if (!member) return;
-
-    // WARN
-    if (i.customId === "warn") {
-      let count = WARN_ROLES.filter(r => member.roles.cache.has(r)).length;
-
-      if (count < 3) {
-        await member.roles.add(WARN_ROLES[count]);
-      }
-
-      await sendLog(member.guild, premiumEmbed({
-        title: "Warn",
-        description: `${member} → ${count + 1}/3`
-      }));
-    }
-
-    // MUTE
-    if (i.customId === "mute") {
-      await member.timeout(600000).catch(() => {});
-    }
-
-    // KICK
-    if (i.customId === "kick") {
-      await member.kick().catch(() => {});
-    }
-
-    // BAN
-    if (i.customId === "ban") {
-      await member.ban().catch(() => {});
-    }
-  }
-});
-
-// ================= LOGIN =================
+require("./handlers/commandHandler")(client);
+require("./handlers/eventHandler")(client);
 
 client.login(process.env.TOKEN);
-
 
