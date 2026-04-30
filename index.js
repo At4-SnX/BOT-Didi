@@ -1,3 +1,7 @@
+// ======================================================
+// 🟣 NANCY RP — BOT PREMIUM ULTRA VIOLET LUXE
+// ======================================================
+
 const {
   Client,
   GatewayIntentBits,
@@ -5,8 +9,15 @@ const {
   PermissionsBitField,
   ChannelType,
   EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   Collection
 } = require("discord.js");
+
+// ======================================================
+// 🟣 CLIENT INITIALISATION
+// ======================================================
 
 const client = new Client({
   intents: [
@@ -19,7 +30,9 @@ const client = new Client({
   partials: [Partials.Channel, Partials.Message, Partials.Reaction]
 });
 
-// ================== CONFIG NANCY RP ==================
+// ======================================================
+// 🟣 CONFIGURATION NANCY RP
+// ======================================================
 
 const OWNER_ID = "1022469165824606258";
 const ANNOUNCE_CHANNEL_ID = "1472639290163859638";
@@ -27,10 +40,10 @@ const GIVEAWAY_ROLE_ID = "1492873377017237618";
 const FOUNDATION_ROLE_ID = "1472661671972442387";
 const PREFIX = "n.";
 
-// bots whitelist (à compléter si tu as d’autres bots)
-const BOT_WHITELIST = []; // ex: ["123456789012345678"]
+// Whitelist bots
+const BOT_WHITELIST = [];
 
-// tickets catégories
+// Tickets catégories
 const categories = {
   "1488678969472454846": "report_staff",
   "1488679203590373557": "unban",
@@ -39,18 +52,1001 @@ const categories = {
   "1488683247998079006": "report_joueur"
 };
 
-// états internes
-const raidState = new Map();      // guildId -> { active: bool }
-const antiBotState = new Map();   // guildId -> bool
-const serverSaves = new Map();    // guildId -> snapshot structure
+// États internes
+const raidState = new Map();
+const antiBotState = new Map();
+const serverSaves = new Map();
 const giveaways = new Collection();
 
-// ================== READY & SLASH COMMANDS ==================
+// ======================================================
+// 🟣 STYLE PREMIUM — ULTRA VIOLET LUXE
+// ======================================================
+
+const COLOR_MAIN = 0x8e44ad;      // Violet Royal
+const COLOR_SUCCESS = 0x9b59b6;   // Violet clair luxe
+const COLOR_ERROR = 0xc0392b;     // Rouge foncé
+const COLOR_RAID = 0xe74c3c;      // Rouge premium
+
+const FOOTER = { text: "🌺 Nancy RP • Security core" };
+
+// ======================================================
+// 🟣 FONCTIONS EMBEDS PREMIUM
+// ======================================================
+
+function embedInfo(title, description) {
+  return new EmbedBuilder()
+    .setColor(COLOR_MAIN)
+    .setTitle(`🔮 ${title}`)
+    .setDescription(description)
+    .setFooter(FOOTER)
+    .setTimestamp();
+}
+
+function embedSuccess(title, description) {
+  return new EmbedBuilder()
+    .setColor(COLOR_SUCCESS)
+    .setTitle(`✨ ${title}`)
+    .setDescription(description)
+    .setFooter(FOOTER)
+    .setTimestamp();
+}
+
+function embedError(title, description) {
+  return new EmbedBuilder()
+    .setColor(COLOR_ERROR)
+    .setTitle(`🛑 ${title}`)
+    .setDescription(description)
+    .setFooter(FOOTER)
+    .setTimestamp();
+}
+
+function embedRaidAlert(simulation = false) {
+  return new EmbedBuilder()
+    .setColor(simulation ? 0xf1c40f : COLOR_RAID)
+    .setTitle(simulation ? "🟡 Simulation de RAID" : "🚨 RAID ACTIVÉ")
+    .setDescription(
+      simulation
+        ? "Ceci est **une simulation** du RAID Mode.\nAucune action réelle n’a été appliquée."
+        : "Le **RAID MODE** est maintenant actif.\nLes salons sont verrouillés et les bots non whitelist sont expulsés."
+    )
+    .setFooter(FOOTER)
+    .setTimestamp();
+}
+
+// ======================================================
+// 🟣 FONCTIONS UTILITAIRES
+// ======================================================
+
+function isOwner(id) {
+  return id === OWNER_ID;
+}
+
+function canUseGiveaway(member) {
+  return (
+    member.roles.cache.has(GIVEAWAY_ROLE_ID) ||
+    member.roles.cache.has(FOUNDATION_ROLE_ID) ||
+    member.id === OWNER_ID
+  );
+}
+
+async function lockChannels(guild) {
+  const everyone = guild.roles.everyone;
+  for (const [, channel] of guild.channels.cache) {
+    if (!channel.isTextBased() && channel.type !== ChannelType.GuildCategory) continue;
+    await channel.permissionOverwrites
+      .edit(everyone, {
+        SendMessages: false,
+        AddReactions: false,
+        CreatePublicThreads: false,
+        CreatePrivateThreads: false
+      })
+      .catch(() => {});
+  }
+}
+
+async function unlockChannels(guild) {
+  const everyone = guild.roles.everyone;
+  for (const [, channel] of guild.channels.cache) {
+    if (!channel.isTextBased() && channel.type !== ChannelType.GuildCategory) continue;
+    await channel.permissionOverwrites
+      .edit(everyone, {
+        SendMessages: null,
+        AddReactions: null,
+        CreatePublicThreads: null,
+        CreatePrivateThreads: null
+      })
+      .catch(() => {});
+  }
+}
+
+async function kickNonWhitelistedBots(guild) {
+  const members = await guild.members.fetch();
+  for (const [, member] of members) {
+    if (member.user.bot && !BOT_WHITELIST.includes(member.id) && member.id !== client.user.id) {
+      await member.kick("Raid Mode : bot non whitelist").catch(() => {});
+    }
+  }
+}
+
+function snapshotServer(guild) {
+  const data = { categories: [], channels: [] };
+
+  guild.channels.cache.forEach((ch) => {
+    if (ch.type === ChannelType.GuildCategory) {
+      data.categories.push({
+        id: ch.id,
+        name: ch.name,
+        position: ch.position
+      });
+    } else if (ch.type === ChannelType.GuildText || ch.type === ChannelType.GuildVoice) {
+      data.channels.push({
+        id: ch.id,
+        name: ch.name,
+        type: ch.type,
+        parentId: ch.parentId,
+        position: ch.position
+      });
+    }
+  });
+
+  return data;
+}
+
+async function restoreServer(guild, snapshot) {
+  if (!snapshot) return;
+
+  for (const cat of snapshot.categories) {
+    if (!guild.channels.cache.has(cat.id)) {
+      await guild.channels
+        .create({
+          name: cat.name,
+          type: ChannelType.GuildCategory,
+          position: cat.position
+        })
+        .catch(() => {});
+    }
+  }
+
+  for (const ch of snapshot.channels) {
+    const exists = guild.channels.cache.find(
+      (c) => c.name === ch.name && c.type === ch.type && c.parentId === ch.parentId
+    );
+    if (!exists) {
+      await guild.channels
+        .create({
+          name: ch.name,
+          type: ch.type,
+          parent: ch.parentId || null,
+          position: ch.position
+        })
+        .catch(() => {});
+    }
+  }
+}
+
+// ======================================================
+// 🟣 TICKETS — FORMULAIRES PREMIUM ULTRA VIOLET LUXE
+// ======================================================
+
+client.on("channelCreate", async (channel) => {
+  // On attend 2 secondes pour laisser Discord créer le salon
+  setTimeout(async () => {
+    if (!channel.parentId) return;
+
+    const type = categories[channel.parentId];
+    if (!type) return;
+
+    let message = "";
+    let title = "";
+
+    switch (type) {
+      case "report_staff":
+        title = "🔮 Signalement Staff — Formulaire Officiel";
+        message = `
+🟣 **Ce formulaire est destiné aux joueurs souhaitant signaler un membre du staff.**
+Merci de remplir ce formulaire avec sérieux.  
+Les signalements abusifs ou incomplets ne seront pas traités.
+
+💜 **Identité du Staff (pseudo) :**  
+*(Nom du staff concerné)*
+
+🕒 **Date et heure du problème :**  
+*(Exemple : 15/03/2026 — 22h40)*
+
+🔮 **Lieu ou contexte du problème :**  
+*(Scène en cours, intervention staff, ticket, vocal…)*
+
+📄 **Description complète du problème :**  
+*(Explique clairement ce qu’il s’est passé, les décisions prises, ton ressenti, etc.)*
+
+📎 **Preuves (screen, vidéo, logs) :**  
+*(Lien ou fichiers à joindre — obligatoire si possible)*
+        `;
+        break;
+
+      case "unban":
+        title = "🔮 Demande d’Unban — Formulaire Officiel";
+        message = `
+🟣 **Vous avez ouvert ce ticket pour faire une demande d’unban.**  
+Merci de fournir les informations nécessaires.
+
+💜 **Identité (Pseudo IG / ID Roblox) :**  
+*(Votre nom en jeu et Identifiant Roblox)*
+
+🕒 **Date du bannissement :**  
+*(Indiquez la date approximative si vous ne vous en souvenez plus)*
+
+📄 **Raison du bannissement (si connue) :**  
+*(Expliquez ce qui vous a été reproché)*
+
+🔮 **Pourquoi souhaitez-vous être unban ?**  
+*(Expliquez votre démarche, votre remise en question, et ce que vous comptez améliorer)*
+
+📎 **Éléments supplémentaires (optionnel) :**  
+*(Screens, explications, contexte…)*
+        `;
+        break;
+
+      case "partenariat":
+        title = "🔮 Demande de Partenariat — Nancy RP";
+        message = `
+🟣 **Vous avez ouvert ce ticket afin de faire une demande de partenariat.**  
+Merci de lire les conditions avant de poursuivre.
+
+💜 **Conditions minimales :**  
+- 150 membres réels minimum  
+- Serveur actif  
+- Présentation claire  
+- Aucun contenu illégal ou NSFW  
+
+🔮 **Engagements attendus :**  
+- Publication de notre annonce  
+- Ajout dans vos partenaires  
+- Respect des valeurs Nancy RP  
+
+📄 **Informations à fournir :**  
+🔗 Lien du serveur  
+👥 Nombre de membres  
+📘 Présentation  
+🎯 Motivation  
+📣 Engagements  
+
+🔒 **La Fondation analysera votre demande.**
+        `;
+        break;
+
+      case "autre":
+        title = "🔮 Demande Spéciale — Formulaire";
+        message = `
+🟣 **Ce formulaire est destiné aux joueurs souhaitant faire une demande spéciale.**
+
+💜 **Identité (Pseudo IG) :**  
+🆔 **Identité Discord :**  
+🎯 **Nature de la demande :**  
+📄 **Description complète :**  
+📎 **Documents (si nécessaire) :**  
+🗣️ **As-tu déjà discuté avec un staff ?**
+
+🔒 **La Fondation reviendra vers toi.**
+        `;
+        break;
+
+      case "report_joueur":
+        title = "🔮 Signalement Joueur — Formulaire Officiel";
+        message = `
+🟣 **Ce formulaire est destiné aux joueurs souhaitant signaler un autre joueur.**
+
+💜 **Identité du joueur :**  
+🕒 **Date et heure :**  
+📍 **Lieu :**  
+📄 **Description :**  
+📎 **Preuves :**
+        `;
+        break;
+    }
+
+    if (!message) return;
+
+    const embed = new EmbedBuilder()
+      .setColor(COLOR_MAIN)
+      .setTitle(title)
+      .setDescription(message)
+      .setFooter(FOOTER)
+      .setTimestamp();
+
+    await channel.send({
+      embeds: [embed],
+      content: "https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/NANCY_RP_4.gif"
+    });
+  }, 2000);
+});
+
+// ======================================================
+// 🟣 COMMANDES PREFIX — VERSION PREMIUM ULTRA VIOLET LUXE
+// ======================================================
+
+client.on("messageCreate", async (message) => {
+  if (message.author.bot || !message.guild) return;
+  if (!message.content.startsWith(PREFIX)) return;
+
+  const args = message.content.slice(PREFIX.length).trim().split(/\s+/);
+  const cmd = args.shift()?.toLowerCase();
+
+  // ======================================================
+  // 🟣 HELP — n.help
+  // ======================================================
+  if (cmd === "help") {
+    const embed = embedInfo(
+      "Aide Nancy RP",
+      [
+        "🟣 **Préfixe :** `n.`",
+        "",
+        "🔮 **Protection & RAID**",
+        "`n.raid` – Active le RAID Mode (confirmation requise)",
+        "`n.unraid` – Désactive le RAID Mode",
+        "`n.raidsim` – Simulation de RAID",
+        "",
+        "🟣 **Sécurité bots**",
+        "`n.antibot on` – Active l’anti-bot",
+        "`n.antibot off` – Désactive l’anti-bot",
+        "",
+        "💜 **Sauvegarde serveur**",
+        "`n.save` – Sauvegarde la structure",
+        "`n.load` – Restaure la dernière sauvegarde",
+        "",
+        "🎁 **Giveaway**",
+        "Utilise `/giveaway` (Fondation + rôle giveaway)",
+        "",
+        "🔮 **Version slash :** `/help`"
+      ].join("\n")
+    );
+
+    return message.channel.send({ embeds: [embed] });
+  }
+
+  // ======================================================
+  // 🛡️ COMMANDES OWNER UNIQUEMENT
+  // ======================================================
+  if (!isOwner(message.author.id)) {
+    return message.channel.send({
+      embeds: [
+        embedError(
+          "Accès refusé",
+          "Cette commande est réservée au propriétaire du bot."
+        )
+      ]
+    });
+  }
+
+  // ======================================================
+  // 🔥 RAID MODE — n.raid (avec confirmation)
+  // ======================================================
+  if (cmd === "raid") {
+    const confirmEmbed = embedError(
+      "Confirmation RAID Mode",
+      "🟣 Es-tu sûr de vouloir **activer le RAID MODE** ?\n\n" +
+        "Cette action va :\n" +
+        "🔮 Verrouiller tous les salons\n" +
+        "🛑 Expulser les bots non whitelist\n" +
+        "💜 Activer la protection maximale"
+    );
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("confirm_raid_prefix")
+        .setLabel("Activer le RAID")
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setCustomId("cancel_raid_prefix")
+        .setLabel("Annuler")
+        .setStyle(ButtonStyle.Secondary)
+    );
+
+    const msg = await message.channel.send({
+      embeds: [confirmEmbed],
+      components: [row]
+    });
+
+    // Collecteur de boutons
+    const collector = msg.createMessageComponentCollector({
+      time: 30000
+    });
+
+    collector.on("collect", async (interaction) => {
+      if (interaction.user.id !== OWNER_ID) {
+        return interaction.reply({
+          embeds: [
+            embedError(
+              "Non autorisé",
+              "Seul le propriétaire du bot peut confirmer cette action."
+            )
+          ],
+          ephemeral: true
+        });
+      }
+
+      if (interaction.customId === "confirm_raid_prefix") {
+        collector.stop("confirmed");
+
+        raidState.set(message.guild.id, { active: true });
+        await lockChannels(message.guild);
+        await kickNonWhitelistedBots(message.guild);
+
+        await interaction.update({
+          embeds: [
+            embedRaidAlert(false).setDescription(
+              "🚨 **RAID MODE ACTIVÉ**\n\n" +
+                "🔮 Salons verrouillés\n" +
+                "🛑 Bots non whitelist expulsés\n" +
+                "💜 Protection maximale active"
+            )
+          ],
+          components: []
+        });
+      }
+
+      if (interaction.customId === "cancel_raid_prefix") {
+        collector.stop("cancelled");
+
+        await interaction.update({
+          embeds: [
+            embedInfo(
+              "Raid annulé",
+              "🟣 Le RAID Mode n’a pas été activé."
+            )
+          ],
+          components: []
+        });
+      }
+    });
+
+    collector.on("end", async (collected, reason) => {
+      if (reason === "time") {
+        await msg.edit({
+          embeds: [
+            embedError(
+              "Confirmation expirée",
+              "🕒 Tu n’as pas confirmé à temps."
+            )
+          ],
+          components: []
+        });
+      }
+    });
+
+    return;
+  }
+
+  // ======================================================
+  // 🔓 n.unraid
+  // ======================================================
+  if (cmd === "unraid") {
+    raidState.set(message.guild.id, { active: false });
+    await unlockChannels(message.guild);
+
+    return message.channel.send({
+      embeds: [
+        embedSuccess(
+          "RAID Mode désactivé",
+          "🟣 Les salons ont été déverrouillés."
+        )
+      ]
+    });
+  }
+
+  // ======================================================
+  // 🟡 n.raidsim
+  // ======================================================
+  if (cmd === "raidsim") {
+    const embed = embedRaidAlert(true);
+    return message.channel.send({ embeds: [embed] });
+  }
+
+  // ======================================================
+  // 🤖 n.antibot
+  // ======================================================
+  if (cmd === "antibot") {
+    const mode = (args[0] || "").toLowerCase();
+
+    if (!["on", "off"].includes(mode)) {
+      return message.channel.send({
+        embeds: [
+          embedError(
+            "Utilisation incorrecte",
+            "Format attendu : `n.antibot on` ou `n.antibot off`"
+          )
+        ]
+      });
+    }
+
+    const enabled = mode === "on";
+    antiBotState.set(message.guild.id, enabled);
+
+    return message.channel.send({
+      embeds: [
+        embedSuccess(
+          "Anti-bot mis à jour",
+          enabled
+            ? "🔮 L’anti-bot est maintenant **activé**."
+            : "🟣 L’anti-bot est maintenant **désactivé**."
+        )
+      ]
+    });
+  }
+
+  // ======================================================
+  // 💾 n.save
+  // ======================================================
+  if (cmd === "save") {
+    const snap = snapshotServer(message.guild);
+    serverSaves.set(message.guild.id, snap);
+
+    return message.channel.send({
+      embeds: [
+        embedSuccess(
+          "Sauvegarde effectuée",
+          "🟣 La structure du serveur a été sauvegardée."
+        )
+      ]
+    });
+  }
+
+  // ======================================================
+  // 💾 n.load
+  // ======================================================
+  if (cmd === "load") {
+    const snap = serverSaves.get(message.guild.id);
+
+    if (!snap) {
+      return message.channel.send({
+        embeds: [
+          embedError(
+            "Aucune sauvegarde",
+            "Aucune sauvegarde n’a été trouvée pour ce serveur."
+          )
+        ]
+      });
+    }
+
+    await restoreServer(message.guild, snap);
+
+    return message.channel.send({
+      embeds: [
+        embedSuccess(
+          "Restauration terminée",
+          "🟣 La structure du serveur a été restaurée."
+        )
+      ]
+    });
+  }
+});
+
+// ======================================================
+// 🟣 COMMANDES SLASH — VERSION PREMIUM ULTRA VIOLET LUXE
+// ======================================================
+
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+
+  const { commandName } = interaction;
+
+  // ======================================================
+  // 🟣 /help
+  // ======================================================
+  if (commandName === "help") {
+    const embed = embedInfo(
+      "Aide Nancy RP",
+      [
+        "🟣 **Préfixe :** `n.`",
+        "",
+        "🔮 **Protection & RAID**",
+        "`/raid` – Active le RAID Mode (confirmation requise)",
+        "`/unraid` – Désactive le RAID Mode",
+        "`/raidsim` – Simulation de RAID",
+        "",
+        "🟣 **Sécurité bots**",
+        "`/antibot mode:on/off` – Active/Désactive l’anti-bot",
+        "",
+        "💜 **Sauvegarde serveur**",
+        "`/save` – Sauvegarde la structure",
+        "`/load` – Restaure la dernière sauvegarde",
+        "",
+        "🎁 **Giveaway**",
+        "`/giveaway durée:<minutes> récompense:<texte>`",
+        "",
+        "🔮 **Version préfixe :** `n.help`"
+      ].join("\n")
+    );
+
+    return interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+
+  // ======================================================
+  // 🛡️ COMMANDES OWNER UNIQUEMENT
+  // ======================================================
+  if (["raid", "unraid", "raidsim", "antibot", "save", "load"].includes(commandName)) {
+    if (!isOwner(interaction.user.id)) {
+      return interaction.reply({
+        embeds: [
+          embedError(
+            "Accès refusé",
+            "Cette commande est réservée au propriétaire du bot."
+          )
+        ],
+        ephemeral: true
+      });
+    }
+  }
+
+  // ======================================================
+  // 🔥 /raid — Confirmation interactive
+  // ======================================================
+  if (commandName === "raid") {
+    const confirmEmbed = embedError(
+      "Confirmation RAID Mode",
+      "🟣 Es-tu sûr de vouloir **activer le RAID MODE** ?\n\n" +
+        "Cette action va :\n" +
+        "🔮 Verrouiller tous les salons\n" +
+        "🛑 Expulser les bots non whitelist\n" +
+        "💜 Activer la protection maximale"
+    );
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("confirm_raid_slash")
+        .setLabel("Activer le RAID")
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setCustomId("cancel_raid_slash")
+        .setLabel("Annuler")
+        .setStyle(ButtonStyle.Secondary)
+    );
+
+    await interaction.reply({
+      embeds: [confirmEmbed],
+      components: [row],
+      ephemeral: true
+    });
+
+    return;
+  }
+
+  // ======================================================
+  // 🔓 /unraid
+  // ======================================================
+  if (commandName === "unraid") {
+    raidState.set(interaction.guild.id, { active: false });
+    await unlockChannels(interaction.guild);
+
+    return interaction.reply({
+      embeds: [
+        embedSuccess(
+          "RAID Mode désactivé",
+          "🟣 Les salons ont été déverrouillés."
+        )
+      ],
+      ephemeral: true
+    });
+  }
+
+  // ======================================================
+  // 🟡 /raidsim
+  // ======================================================
+  if (commandName === "raidsim") {
+    const embed = embedRaidAlert(true);
+    return interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+
+  // ======================================================
+  // 🤖 /antibot
+  // ======================================================
+  if (commandName === "antibot") {
+    const mode = interaction.options.getString("mode");
+    const enabled = mode === "on";
+
+    antiBotState.set(interaction.guild.id, enabled);
+
+    return interaction.reply({
+      embeds: [
+        embedSuccess(
+          "Anti-bot mis à jour",
+          enabled
+            ? "🔮 L’anti-bot est maintenant **activé**."
+            : "🟣 L’anti-bot est maintenant **désactivé**."
+        )
+      ],
+      ephemeral: true
+    });
+  }
+
+  // ======================================================
+  // 💾 /save
+  // ======================================================
+  if (commandName === "save") {
+    const snap = snapshotServer(interaction.guild);
+    serverSaves.set(interaction.guild.id, snap);
+
+    return interaction.reply({
+      embeds: [
+        embedSuccess(
+          "Sauvegarde effectuée",
+          "🟣 La structure du serveur a été sauvegardée."
+        )
+      ],
+      ephemeral: true
+    });
+  }
+
+  // ======================================================
+  // 💾 /load
+  // ======================================================
+  if (commandName === "load") {
+    const snap = serverSaves.get(interaction.guild.id);
+
+    if (!snap) {
+      return interaction.reply({
+        embeds: [
+          embedError(
+            "Aucune sauvegarde",
+            "Aucune sauvegarde n’a été trouvée pour ce serveur."
+          )
+        ],
+        ephemeral: true
+      });
+    }
+
+    await restoreServer(interaction.guild, snap);
+
+    return interaction.reply({
+      embeds: [
+        embedSuccess(
+          "Restauration terminée",
+          "🟣 La structure du serveur a été restaurée."
+        )
+      ],
+      ephemeral: true
+    });
+  }
+
+  // ======================================================
+  // 🎁 /giveaway
+  // ======================================================
+  if (commandName === "giveaway") {
+    if (!canUseGiveaway(interaction.member)) {
+      return interaction.reply({
+        embeds: [
+          embedError(
+            "Accès refusé",
+            "Tu n’as pas les permissions pour lancer un giveaway."
+          )
+        ],
+        ephemeral: true
+      });
+    }
+
+    const durationMinutes = interaction.options.getInteger("durée");
+    const prize = interaction.options.getString("récompense");
+
+    if (durationMinutes <= 0) {
+      return interaction.reply({
+        embeds: [
+          embedError(
+            "Durée invalide",
+            "La durée doit être supérieure à 0."
+          )
+        ],
+        ephemeral: true
+      });
+    }
+
+    const endTime = Date.now() + durationMinutes * 60 * 1000;
+
+    const embed = new EmbedBuilder()
+      .setColor(COLOR_SUCCESS)
+      .setTitle("🎁 Giveaway Premium")
+      .setDescription(
+        `💜 Récompense : **${prize}**\n` +
+          `🔮 Réagis avec 🎉 pour participer !\n` +
+          `🕒 Fin dans **${durationMinutes} minutes**.`
+      )
+      .setFooter(FOOTER)
+      .setTimestamp(endTime);
+
+    const msg = await interaction.reply({ embeds: [embed], fetchReply: true });
+    await msg.react("🎉");
+
+    giveaways.set(msg.id, {
+      guildId: interaction.guild.id,
+      channelId: msg.channel.id,
+      messageId: msg.id,
+      prize,
+      endTime
+    });
+
+    // Timer de fin
+    setTimeout(async () => {
+      const data = giveaways.get(msg.id);
+      if (!data) return;
+
+      const channel = await client.channels.fetch(data.channelId).catch(() => null);
+      if (!channel || !channel.isTextBased()) return;
+
+      const message = await channel.messages.fetch(data.messageId).catch(() => null);
+      if (!message) return;
+
+      const reaction = message.reactions.cache.get("🎉");
+      if (!reaction) return;
+
+      const users = await reaction.users.fetch();
+      const participants = users.filter((u) => !u.bot);
+
+      if (!participants.size) {
+        await channel.send({
+          embeds: [
+            embedError(
+              "Aucun participant",
+              "Personne n’a participé au giveaway."
+            )
+          ]
+        });
+        giveaways.delete(msg.id);
+        return;
+      }
+
+      const winner = participants.random();
+
+      await channel.send({
+        embeds: [
+          embedSuccess(
+            "Gagnant du Giveaway",
+            `🎉 Félicitations ${winner} !\nTu remportes **${data.prize}** !`
+          )
+        ]
+      });
+
+      giveaways.delete(msg.id);
+    }, durationMinutes * 60 * 1000);
+  }
+});
+
+// ======================================================
+// 🟣 SYSTÈMES INTERNES — RAID, ANTIBOT, GIVEAWAY, LOGIN
+// ======================================================
+
+// ======================================================
+// 🤖 ANTI-BOT — Kick automatique des bots non whitelist
+// ======================================================
+
+client.on("guildMemberAdd", async (member) => {
+  if (!member.guild) return;
+
+  const enabled = antiBotState.get(member.guild.id);
+  if (!enabled) return;
+
+  if (!member.user.bot) return;
+  if (BOT_WHITELIST.includes(member.id)) return;
+  if (member.id === client.user.id) return;
+
+  await member.kick("Anti-bot activé : bot non whitelist").catch(() => {});
+});
+
+// ======================================================
+// 🔘 GESTION DES BOUTONS — CONFIRMATION RAID (prefix + slash)
+// ======================================================
+
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isButton()) return;
+
+  const id = interaction.customId;
+
+  // ======================================================
+  // 🔥 RAID — Slash command confirmation
+  // ======================================================
+  if (id === "confirm_raid_slash") {
+    if (interaction.user.id !== OWNER_ID) {
+      return interaction.reply({
+        embeds: [
+          embedError(
+            "Non autorisé",
+            "Seul le propriétaire du bot peut confirmer cette action."
+          )
+        ],
+        ephemeral: true
+      });
+    }
+
+    raidState.set(interaction.guild.id, { active: true });
+    await lockChannels(interaction.guild);
+    await kickNonWhitelistedBots(interaction.guild);
+
+    return interaction.update({
+      embeds: [
+        embedRaidAlert(false).setDescription(
+          "🚨 **RAID MODE ACTIVÉ**\n\n" +
+            "🔮 Salons verrouillés\n" +
+            "🛑 Bots non whitelist expulsés\n" +
+            "💜 Protection maximale active"
+        )
+      ],
+      components: []
+    });
+  }
+
+  if (id === "cancel_raid_slash") {
+    return interaction.update({
+      embeds: [
+        embedInfo(
+          "Raid annulé",
+          "🟣 Le RAID Mode n’a pas été activé."
+        )
+      ],
+      components: []
+    });
+  }
+
+  // ======================================================
+  // 🔥 RAID — Prefix command confirmation
+  // ======================================================
+  if (id === "confirm_raid_prefix") {
+    if (interaction.user.id !== OWNER_ID) {
+      return interaction.reply({
+        embeds: [
+          embedError(
+            "Non autorisé",
+            "Seul le propriétaire du bot peut confirmer cette action."
+          )
+        ],
+        ephemeral: true
+      });
+    }
+
+    raidState.set(interaction.guild.id, { active: true });
+    await lockChannels(interaction.guild);
+    await kickNonWhitelistedBots(interaction.guild);
+
+    return interaction.update({
+      embeds: [
+        embedRaidAlert(false).setDescription(
+          "🚨 **RAID MODE ACTIVÉ**\n\n" +
+            "🔮 Salons verrouillés\n" +
+            "🛑 Bots non whitelist expulsés\n" +
+            "💜 Protection maximale active"
+        )
+      ],
+      components: []
+    });
+  }
+
+  if (id === "cancel_raid_prefix") {
+    return interaction.update({
+      embeds: [
+        embedInfo(
+          "Raid annulé",
+          "🟣 Le RAID Mode n’a pas été activé."
+        )
+      ],
+      components: []
+    });
+  }
+});
+
+// ======================================================
+// 🎁 GIVEAWAY — Nettoyage automatique si message supprimé
+// ======================================================
+
+client.on("messageDelete", (message) => {
+  if (giveaways.has(message.id)) {
+    giveaways.delete(message.id);
+  }
+});
+
+// ======================================================
+// 🚀 READY — Enregistrement des commandes slash
+// ======================================================
 
 client.on("ready", async () => {
-  console.log(`Connecté en tant que ${client.user.tag}`);
+  console.log(`🟣 Connecté en tant que ${client.user.tag}`);
 
-  // Enregistrement des commandes slash (globales)
   if (!client.application?.commands) return;
 
   await client.application.commands.set([
@@ -114,122 +1110,12 @@ client.on("ready", async () => {
     }
   ]);
 
-  console.log("Commandes slash enregistrées.");
+  console.log("🟣 Commandes slash enregistrées.");
 });
 
-// ================== TICKETS (TON CODE) ==================
-
-client.on("channelCreate", (channel) => {
-  console.log("Nouveau salon détecté :", channel.name, "parent:", channel.parentId);
-});
-
-client.on("channelCreate", async (channel) => {
-  setTimeout(async () => {
-    if (!channel.parentId) return;
-
-    const type = categories[channel.parentId];
-    if (!type) return;
-
-    let message = "";
-
-    switch (type) {
-      case "report_staff":
-        message = `:pushpin: **Ce formulaire est destiné aux joueurs souhaitant signaler un membre du staff.**
-**Merci de remplir ce formulaire avec sérieux.**
-**Les signalements abusifs ou incomplets ne seront pas traités.**
-
-:bust_in_silhouette: **Identité du Staff (pseudo) : **
-*(Nom du staff concerné)*
-
-:clock3: **Date et heure du problème : **
-*(Exemple : 15/03/2026 — 22h40)*
-
-:round_pushpin: **Lieu ou contexte du problème : **
-*(Exemple : scène en cours, intervention staff, ticket, vocal…)*
-
-:page_facing_up: **Description complète du problème : **
-*(Explique clairement ce qu’il s’est passé, les décisions prises, ton ressenti, etc.)*
-
-:paperclip: **Preuves (screen, vidéo, logs) : **
-*(Lien ou fichiers à joindre — obligatoire si possible)*`;
-        break;
-
-      case "unban":
-        message = `:pushpin: **Vous avez ouvert ce ticket afin de faire une demande d’unban. Merci de fournir les informations nécessaires afin que votre requête soit étudiée.**
-
-:bust_in_silhouette: **Identité (Pseudo IG / ID Roblox) : **
-*(Votre nom en jeu et Identifiant Roblox)*
-
-:clock3: **Date du bannissement : **
-*(Indiquez la date approximative si vous ne vous en souvenez plus)*
-
-:receipt: **Raison du bannissement (si connue) : **
-*(Expliquez ce qui vous a été reproché)*
-
-:pencil: **Pourquoi souhaitez-vous être unban ? **
-*(Expliquez votre démarche, votre remise en question, et ce que vous comptez améliorer)*
-
-:paperclip: **Éléments supplémentaires (optionnel) : **
-*(Screens, explications, contexte…)*`;
-        break;
-
-      case "partenariat":
-        message = `:pushpin: **Vous avez ouvert ce ticket afin de faire une demande de partenariat.**
-**Merci de prendre connaissance des conditions ci-dessous avant de poursuivre.**
-
-:bookmark_tabs: **Conditions de Partenariat — Nancy RP**
-
-:white_check_mark: Conditions minimales :
-- Le serveur doit compter au minimum 150 membres réels.
-- Le serveur doit être actif.
-- Présentation claire.
-- Aucun contenu illégal ou NSFW.
-
-:arrows_counterclockwise: Engagements attendus :
-- Publication de notre annonce
-- Ajout dans vos partenaires
-- Respect des valeurs
-
-:pencil: **Informations à fournir :**
-:link: Lien du serveur
-:busts_in_silhouette: Nombre de membres
-:receipt: Présentation
-:dart: Motivation
-:mega: Engagements
-
-:lock: **La Fondation analysera votre demande.**`;
-        break;
-
-      case "autre":
-        message = `:pushpin: **Ce formulaire est destiné aux joueurs souhaitant faire une demande spéciale.**
-
-:bust_in_silhouette: **Identité (Pseudo IG) : **
-:id: **Identité Discord : **
-:dart: **Nature de la demande : **
-:pencil: **Description complète : **
-:paperclip: **Documents : **
-:speaking_head: **As-tu déjà discuté avec un staff ?**
-
-:lock: **La Fondation reviendra vers toi.**`;
-        break;
-
-      case "report_joueur":
-        message = `:pushpin: **Ce formulaire est destiné aux joueurs souhaitant signaler un autre joueur.**
-
-:bust_in_silhouette: **Identité du joueur : **
-:clock3: **Date et heure : **
-const { Client, GatewayIntentBits, Partials, Collection } = require("discord.js");
-const fs = require("fs");
-
-const client = new Client({
-  intents: Object.values(GatewayIntentBits),
-  partials: Object.values(Partials)
-});
-
-client.commands = new Collection();
-
-require("./handlers/commandHandler")(client);
-require("./handlers/eventHandler")(client);
+// ======================================================
+// 🔑 LOGIN FINAL
+// ======================================================
 
 client.login(process.env.TOKEN);
 
