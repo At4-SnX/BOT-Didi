@@ -2,401 +2,252 @@ const {
   Client,
   GatewayIntentBits,
   Partials,
+  PermissionsBitField,
+  ChannelType,
   EmbedBuilder,
-  SlashCommandBuilder,
+  Collection,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle,
-  PermissionsBitField
+  ButtonStyle
 } = require("discord.js");
-const fs = require("fs");
 
-// ====== CONFIG ======
-const LOG_CHANNEL = "1499125248191103066";
-const RAID_ROLE = "1472950794495201427";
-
-const WARN_1 = "1472675083339169813";
-const WARN_2 = "1472675086741012637";
-const WARN_3 = "1472675097771774104";
-
-const FOOTER = "🌺 Nancy RP • Security core";
-const WARN_FILE = "./warns.json";
-const WARN_LIFETIME = 7 * 24 * 60 * 60 * 1000; // 7 jours
-
-// ====== CHARGEMENT DES WARNS ======
-let warns = {};
-if (fs.existsSync(WARN_FILE)) {
-  try {
-    warns = JSON.parse(fs.readFileSync(WARN_FILE, "utf8"));
-  } catch {
-    warns = {};
-  }
-}
-
-function saveWarns() {
-  fs.writeFileSync(WARN_FILE, JSON.stringify(warns, null, 4));
-}
-
-// Retourne les warns actifs (non expirés)
-function getActiveWarns(userId) {
-  const now = Date.now();
-  if (!warns[userId]) return [];
-
-  const filtered = warns[userId].filter(ts => now - ts < WARN_LIFETIME);
-  warns[userId] = filtered;
-  saveWarns();
-  return filtered;
-}
-
-// Met à jour les rôles selon le niveau de warn
-async function updateWarnRoles(member) {
-  const active = getActiveWarns(member.id);
-  const count = active.length;
-
-  const rolesToRemove = [WARN_1, WARN_2, WARN_3];
-  try {
-    await member.roles.remove(rolesToRemove.filter(r => member.roles.cache.has(r)));
-  } catch {}
-
-  let roleToAdd = null;
-  if (count === 1) roleToAdd = WARN_1;
-  else if (count === 2) roleToAdd = WARN_2;
-  else if (count >= 3) roleToAdd = WARN_3;
-
-  if (roleToAdd) {
-    try {
-      await member.roles.add(roleToAdd);
-    } catch {}
-  }
-
-  return count;
-}
-
-// Anti-abus warn (détection de spam)
-const modWarnHistory = new Map(); // modId -> timestamps
-
-function registerModWarn(modId) {
-  const now = Date.now();
-  if (!modWarnHistory.has(modId)) modWarnHistory.set(modId, []);
-  const arr = modWarnHistory.get(modId).filter(ts => now - ts < 60 * 1000);
-  arr.push(now);
-  modWarnHistory.set(modId, arr);
-  return arr.length;
-}
-
-// ====== CLIENT ======
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-  ],
-  partials: [Partials.Channel]
+  intents: Object.values(GatewayIntentBits),
+  partials: Object.values(Partials)
 });
 
-// ====== COMMANDES SLASH ======
-client.on("ready", async () => {
-  const commands = [
-    new SlashCommandBuilder()
-      .setName("warn")
-      .setDescription("🌺 Ajouter un avertissement à un utilisateur")
-      .addUserOption(o =>
-        o.setName("utilisateur")
-          .setDescription("Utilisateur à avertir")
-          .setRequired(true)
-      )
-      .addStringOption(o =>
-        o.setName("raison")
-          .setDescription("Raison du warn")
-          .setRequired(false)
-      ),
+// ================= CONFIG =================
 
-    new SlashCommandBuilder()
-      .setName("unwarn")
-      .setDescription("🔮 Retirer un avertissement à un utilisateur")
-      .addUserOption(o =>
-        o.setName("utilisateur")
-          .setDescription("Utilisateur à unwarn")
-          .setRequired(true)
-      ),
+const OWNER_ID = "1022469165824606258";
+const ANNOUNCE_CHANNEL_ID = "1472639290163859638";
+const LOG_CHANNEL_ID = "ID_LOGS";
+const PREFIX = "n.";
 
-    new SlashCommandBuilder()
-      .setName("warnings")
-      .setDescription("💠 Voir les avertissements d’un utilisateur")
-      .addUserOption(o =>
-        o.setName("utilisateur")
-          .setDescription("Utilisateur à consulter")
-          .setRequired(true)
-      ),
+const WARN_ROLES = [
+  "1472675083339169813",
+  "1472675086741012637",
+  "1472675097771774104"
+];
 
-    new SlashCommandBuilder()
-      .setName("raid")
-      .setDescription("🌺 Activer le mode RAID"),
+const BOT_WHITELIST = [];
 
-    new SlashCommandBuilder()
-      .setName("unraid")
-      .setDescription("💠 Désactiver le mode RAID"),
+const categories = {
+  "1488678969472454846": "report_staff",
+  "1488679203590373557": "unban",
+  "1488681903006421172": "partenariat",
+  "1488681966990528593": "autre",
+  "1488683247998079006": "report_joueur"
+};
 
-    new SlashCommandBuilder()
-      .setName("staffpanel")
-      .setDescription("🔮 Ouvrir le panneau staff premium")
-  ];
+// ================= STATE =================
 
-  await client.application.commands.set(commands);
-  console.log("🌺 Commandes chargées.");
+const raidState = new Map();
+const antiBotState = new Map();
+const serverSaves = new Map();
+const giveaways = new Collection();
+const joinTracker = new Map();
+const spamTracker = new Map();
+
+// ================= EMBED =================
+
+function premiumEmbed({ title, description, color = 0x5865f2 }) {
+  return new EmbedBuilder()
+    .setColor(color)
+    .setTitle(`💠 ${title}`)
+    .setDescription(description)
+    .setFooter({ text: "🌺 Nancy RP • Security Core" })
+    .setTimestamp();
+}
+
+// ================= LOG =================
+
+async function sendLog(guild, embed) {
+  const ch = guild.channels.cache.get(LOG_CHANNEL_ID);
+  if (ch) ch.send({ embeds: [embed] }).catch(() => {});
+}
+
+// ================= RAID =================
+
+async function sendRaidDMAll(guild) {
+  const channel = guild.systemChannel || guild.channels.cache.find(c => c.isTextBased());
+  if (!channel) return;
+
+  const invite = await channel.createInvite({ maxAge: 0 }).catch(() => null);
+  if (!invite) return;
+
+  const members = await guild.members.fetch();
+
+  for (const [, m] of members) {
+    if (m.user.bot) continue;
+
+    m.send({
+      embeds: [
+        premiumEmbed({
+          title: "🚨 Raid détecté",
+          description: `Rejoins ici si kick : ${invite.url}`,
+          color: 0xff0000
+        })
+      ]
+    }).catch(() => {});
+  }
+}
+
+// ================= ANTI RAID =================
+
+const RAID_THRESHOLD = 5;
+const RAID_INTERVAL = 10000;
+
+client.on("guildMemberAdd", async (member) => {
+  const id = member.guild.id;
+
+  if (!joinTracker.has(id)) joinTracker.set(id, []);
+
+  const now = Date.now();
+  const joins = joinTracker.get(id).filter(t => now - t < RAID_INTERVAL);
+
+  joins.push(now);
+  joinTracker.set(id, joins);
+
+  if (joins.length >= RAID_THRESHOLD) {
+    if (raidState.get(id)?.active) return;
+
+    raidState.set(id, { active: true });
+
+    await sendRaidDMAll(member.guild);
+
+    await sendLog(member.guild, premiumEmbed({
+      title: "🚨 Raid détecté",
+      description: "Activation automatique"
+    }));
+  }
 });
 
-// ====== INTERACTIONS ======
-client.on("interactionCreate", async interaction => {
-  if (!interaction.isChatInputCommand()) return;
+// ================= ANTI SPAM =================
 
-  const { commandName } = interaction;
-  const member = interaction.member;
-  const isStaff = member.permissions.has(PermissionsBitField.Flags.KickMembers);
+client.on("messageCreate", async (msg) => {
+  if (!msg.guild || msg.author.bot) return;
 
-  // /warn
-  if (commandName === "warn") {
-    if (!isStaff)
-      return interaction.reply({ content: "Permission refusée.", ephemeral: true });
+  const id = msg.author.id;
 
-    const target = interaction.options.getMember("utilisateur");
-    const reason = interaction.options.getString("raison") || "Aucune raison fournie";
+  if (!spamTracker.has(id)) spamTracker.set(id, []);
 
-    if (!target)
-      return interaction.reply({ content: "Utilisateur introuvable.", ephemeral: true });
+  const now = Date.now();
+  const msgs = spamTracker.get(id).filter(t => now - t < 5000);
 
-    const now = Date.now();
-    if (!warns[target.id]) warns[target.id] = [];
-    warns[target.id].push(now);
-    saveWarns();
+  msgs.push(now);
+  spamTracker.set(id, msgs);
 
-    const count = await updateWarnRoles(target);
+  if (msgs.length >= 5) {
+    await msg.delete().catch(() => {});
+    await msg.member.timeout(5000).catch(() => {});
 
-    const modCount = registerModWarn(interaction.user.id);
-    if (modCount >= 5) {
-      const logChannel = interaction.guild.channels.cache.get(LOG_CHANNEL);
-      if (logChannel) {
-        const abuseEmbed = new EmbedBuilder()
-          .setColor("#E056FD")
-          .setTitle("🌺・Alerte Anti-Abus — Warn Spam")
-          .setDescription(
-            "Un modérateur a émis un nombre anormalement élevé de warns en moins d’une minute."
-          )
-          .addFields(
-            { name: "🔮 Modérateur", value: interaction.user.tag },
-            { name: "💠 Warns (1 min)", value: `${modCount}` }
-          )
-          .setFooter({ text: FOOTER })
-          .setTimestamp();
-        logChannel.send({ embeds: [abuseEmbed] });
-      }
-    }
-
-    const embedUser = new EmbedBuilder()
-      .setColor("#9B59B6")
-      .setTitle("🌺・Avertissement Appliqué")
-      .setDescription(
-        `Un avertissement a été appliqué à **${target.user.tag}**.\n\n` +
-        `🔮 **Raison :** ${reason}\n` +
-        `💠 **Niveau actuel :** ${count}/3`
-      )
-      .setFooter({ text: FOOTER })
-      .setTimestamp();
-
-    const embedLog = new EmbedBuilder()
-      .setColor("#5865F2")
-      .setTitle("🌺・Nouveau Warn")
-      .addFields(
-        { name: "🔵 Utilisateur", value: `${target.user.tag} (${target.id})` },
-        { name: "🔮 Niveau", value: `${count}/3` },
-        { name: "🌺 Raison", value: reason },
-        { name: "💠 Modérateur", value: interaction.user.tag }
-      )
-      .setFooter({ text: FOOTER })
-      .setTimestamp();
-
-    const logChannel = interaction.guild.channels.cache.get(LOG_CHANNEL);
-    if (logChannel) logChannel.send({ embeds: [embedLog] });
-
-    return interaction.reply({ embeds: [embedUser], ephemeral: true });
+    await sendLog(msg.guild, premiumEmbed({
+      title: "🧠 Anti-spam",
+      description: `${msg.author} spam détecté`
+    }));
   }
+});
 
-  // /unwarn
-  if (commandName === "unwarn") {
-    if (!isStaff)
-      return interaction.reply({ content: "Permission refusée.", ephemeral: true });
+// ================= TICKETS =================
 
-    const target = interaction.options.getMember("utilisateur");
-    if (!target)
-      return interaction.reply({ content: "Utilisateur introuvable.", ephemeral: true });
+client.on("channelCreate", async (channel) => {
+  setTimeout(async () => {
+    if (!channel.parentId) return;
 
-    const active = getActiveWarns(target.id);
-    if (active.length === 0)
-      return interaction.reply({ content: "Aucun warn actif.", ephemeral: true });
+    const type = categories[channel.parentId];
+    if (!type) return;
 
-    active.pop();
-    warns[target.id] = active;
-    saveWarns();
-
-    const count = await updateWarnRoles(target);
-
-    const embed = new EmbedBuilder()
-      .setColor("#2ECC71")
-      .setTitle("💠・Avertissement Retiré")
-      .setDescription(
-        `Un avertissement a été retiré pour **${target.user.tag}**.\n` +
-        `🔮 **Warn restants :** ${count}/3`
-      )
-      .setFooter({ text: FOOTER })
-      .setTimestamp();
-
-    const logEmbed = new EmbedBuilder()
-      .setColor("#2ECC71")
-      .setTitle("🌺・Unwarn Effectué")
-      .addFields(
-        { name: "🔵 Utilisateur", value: `${target.user.tag}` },
-        { name: "💠 Warn restants", value: `${count}/3` },
-        { name: "🔮 Modérateur", value: interaction.user.tag }
-      )
-      .setFooter({ text: FOOTER })
-      .setTimestamp();
-
-    const logChannel = interaction.guild.channels.cache.get(LOG_CHANNEL);
-    if (logChannel) logChannel.send({ embeds: [logEmbed] });
-
-    return interaction.reply({ embeds: [embed], ephemeral: true });
-  }
-
-  // /warnings
-  if (commandName === "warnings") {
-    if (!isStaff)
-      return interaction.reply({ content: "Permission refusée.", ephemeral: true });
-
-    const target = interaction.options.getMember("utilisateur");
-    if (!target)
-      return interaction.reply({ content: "Utilisateur introuvable.", ephemeral: true });
-
-    const active = getActiveWarns(target.id);
-    const count = active.length;
-
-    const embed = new EmbedBuilder()
-      .setColor("#5865F2")
-      .setTitle("🔮・Historique des Avertissements")
-      .setDescription(
-        `Voici les avertissements **actifs** pour **${target.user.tag}**.\n` +
-        `Expiration automatique : **7 jours**.`
-      )
-      .addFields({ name: "💠 Warns actifs", value: `${count}` })
-      .setFooter({ text: FOOTER })
-      .setTimestamp();
-
-    if (count > 0) {
-      embed.addFields({
-        name: "🌺 Détails",
-        value: active
-          .map((ts, i) => `<t:${Math.floor(ts / 1000)}:f>`)
-          .join("\n")
-      });
-    }
-
-    return interaction.reply({ embeds: [embed], ephemeral: true });
-  }
-
-  // /raid
-  if (commandName === "raid") {
-    if (!isStaff)
-      return interaction.reply({ content: "Permission refusée.", ephemeral: true });
-
-    const embed = new EmbedBuilder()
-      .setColor("#5865F2")
-      .setTitle("🌺・RAID MODE ACTIVÉ")
-      .setDescription(
-        "Le système de sécurité **Nancy RP Premium** a activé le **Raid Mode**.\n\n" +
-        "🔮 Mesures actives :\n" +
-        "• Surveillance renforcée\n" +
-        "• Analyse des comportements suspects\n" +
-        "• Coordination staff recommandée\n"
-      )
-      .setFooter({ text: FOOTER })
-      .setTimestamp();
-
-    return interaction.reply({
-      content: `<@&${RAID_ROLE}>`,
-      embeds: [embed]
-    });
-  }
-
-  // /unraid
-  if (commandName === "unraid") {
-    if (!isStaff)
-      return interaction.reply({ content: "Permission refusée.", ephemeral: true });
-
-    const embed = new EmbedBuilder()
-      .setColor("#2ECC71")
-      .setTitle("💠・Raid Mode Désactivé")
-      .setDescription("Le serveur repasse en mode normal.")
-      .setFooter({ text: FOOTER })
-      .setTimestamp();
-
-    return interaction.reply({ embeds: [embed] });
-  }
-
-  // /staffpanel
-  if (commandName === "staffpanel") {
-    if (!isStaff)
-      return interaction.reply({ content: "Permission refusée.", ephemeral: true });
-
-    const embed = new EmbedBuilder()
-      .setColor("#9B59B6")
-      .setTitle("🔮・Panneau Staff Premium")
-      .setDescription(
-        "Bienvenue dans le **panneau staff premium**.\n\n" +
-        "🌺 **Commandes disponibles :**\n" +
-        "• `/warn`\n" +
-        "• `/unwarn`\n" +
-        "• `/warnings`\n" +
-        "• `/raid`\n" +
-        "• `/unraid`\n\n" +
-        "Expiration automatique des warns : **7 jours**."
-      )
-      .setFooter({ text: FOOTER })
-      .setTimestamp();
+    let message = "Formulaire...";
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("copy_form")
-        .setLabel("📋 Copier modèle warn")
+        .setLabel("📋 Copier")
         .setStyle(ButtonStyle.Primary)
     );
 
-    return interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+    channel.send({
+      embeds: [premiumEmbed({ title: "Ticket", description: message })],
+      components: [row]
+    });
+  }, 1500);
+});
+
+// ================= PANEL STAFF =================
+
+client.on("messageCreate", async (msg) => {
+  if (!msg.content.startsWith(PREFIX) || msg.author.bot) return;
+
+  const cmd = msg.content.slice(PREFIX.length);
+
+  if (cmd === "panel") {
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId("warn").setLabel("⚠️").setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId("mute").setLabel("🔇").setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId("kick").setLabel("👢").setStyle(ButtonStyle.Danger),
+      new ButtonBuilder().setCustomId("ban").setLabel("🔨").setStyle(ButtonStyle.Danger)
+    );
+
+    msg.channel.send({
+      embeds: [premiumEmbed({ title: "Panel Staff", description: "Actions rapides" })],
+      components: [row]
+    });
   }
 });
 
-// Bouton "copier le formulaire"
-client.on("interactionCreate", async interaction => {
-  if (!interaction.isButton()) return;
-  if (interaction.customId !== "copy_form") return;
+// ================= INTERACTIONS =================
 
-  const content =
-    "🌺 **Modèle de warn Nancy RP**\n\n" +
-    "• Utilisateur : @pseudo\n" +
-    "• Raison : \n" +
-    "• Niveau : 1 / 2 / 3\n" +
-    "• Modérateur : \n";
+client.on("interactionCreate", async (i) => {
+  if (i.isButton()) {
 
-  await interaction.reply({
-    content: "Le modèle t’a été envoyé en DM.",
-    ephemeral: true
-  });
+    if (i.customId === "copy_form") {
+      return i.reply({ content: "📋 Formulaire copié", ephemeral: true });
+    }
 
-  try {
-    await interaction.user.send({ content });
-  } catch {}
+    await i.reply({ content: "Mention utilisateur", ephemeral: true });
+
+    const filter = m => m.author.id === i.user.id;
+
+    const collected = await i.channel.awaitMessages({ filter, max: 1, time: 15000 });
+    const msg = collected.first();
+    if (!msg) return;
+
+    const member = msg.mentions.members.first();
+    if (!member) return;
+
+    // WARN
+    if (i.customId === "warn") {
+      let count = WARN_ROLES.filter(r => member.roles.cache.has(r)).length;
+
+      if (count < 3) {
+        await member.roles.add(WARN_ROLES[count]);
+      }
+
+      await sendLog(member.guild, premiumEmbed({
+        title: "Warn",
+        description: `${member} → ${count + 1}/3`
+      }));
+    }
+
+    // MUTE
+    if (i.customId === "mute") {
+      await member.timeout(600000).catch(() => {});
+    }
+
+    // KICK
+    if (i.customId === "kick") {
+      await member.kick().catch(() => {});
+    }
+
+    // BAN
+    if (i.customId === "ban") {
+      await member.ban().catch(() => {});
+    }
+  }
 });
 
-// LOGIN
-client.login("TON_TOKEN_ICI");
+// ================= LOGIN =================
+
+client.login(process.env.TOKEN);
 
 
