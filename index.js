@@ -1160,14 +1160,15 @@ client.on("messageDelete", (message) => {
 client.on("ready", async () => {
   console.log(`🟣 Connecté en tant que ${client.user.tag}`);
 
-  // On récupère ton serveur Nancy RP
+  // Récupération du serveur Nancy RP
   const guild = client.guilds.cache.get("1472637775281918123");
   if (!guild) {
-    console.log("❌ Impossible de trouver le serveur Nancy RP.");
+    console.log("❌ Serveur Nancy RP introuvable. Vérifie l'ID.");
     return;
   }
 
-  // Commandes locales (instantanées)
+  console.log("🟣 Enregistrement des commandes slash locales...");
+
   await guild.commands.set([
     {
       name: "help",
@@ -1228,6 +1229,108 @@ client.on("ready", async () => {
           description: "Nom de la récompense",
           type: 3,
           required: true
+        }
+      ]
+    },
+    {
+      name: "warn",
+      description: "Avertit un membre",
+      options: [
+        {
+          name: "membre",
+          description: "Le membre à avertir",
+          type: 6,
+          required: true
+        },
+        {
+          name: "raison",
+          description: "Raison du warn",
+          type: 3,
+          required: false
+        }
+      ]
+    },
+    {
+      name: "unwarn",
+      description: "Retire un avertissement à un membre",
+      options: [
+        {
+          name: "membre",
+          description: "Le membre à unwarn",
+          type: 6,
+          required: true
+        }
+      ]
+    },
+    {
+      name: "warnings",
+      description: "Affiche le nombre de warns d'un membre",
+      options: [
+        {
+          name: "membre",
+          description: "Le membre à vérifier",
+          type: 6,
+          required: true
+        }
+      ]
+    },
+    {
+      name: "mute",
+      description: "Mute un membre avec une durée",
+      options: [
+        {
+          name: "membre",
+          description: "Le membre à mute",
+          type: 6,
+          required: true
+        },
+        {
+          name: "durée",
+          description: "Exemple : 10m, 1h, 2d",
+          type: 3,
+          required: true
+        },
+        {
+          name: "raison",
+          description: "Raison du mute",
+          type: 3,
+          required: false
+        }
+      ]
+    },
+    {
+      name: "kick",
+      description: "Kick un membre",
+      options: [
+        {
+          name: "membre",
+          description: "Le membre à kick",
+          type: 6,
+          required: true
+        },
+        {
+          name: "raison",
+          description: "Raison du kick",
+          type: 3,
+          required: false
+        }
+      ]
+    },
+    {
+      name: "ban",
+      description: "Ban un membre",
+      options: [
+        {
+          name: "membre",
+          description: "Le membre à bannir",
+          type: 6,
+          required: true
+        },
+        {
+          name: "raison",
+          description: "Raison du ban",
+          type: 3,
+          required: false
         }
       ]
     }
@@ -1321,163 +1424,80 @@ client.on("guildMemberRemove", async (member) => {
 });
 
 // ======================================================
-// 🟣 BLOC 7 — PANEL STAFF (Slash Only + Éphémère)
+// 🟣 BLOC 9 — Warn avec rôles automatiques (1 → 2 → 3)
 // ======================================================
 
-const STAFF_ROLE_ID = "1482533960557789214"; // rôle staff autorisé
+const fs = require("fs");
+
+// Rôles warn
+const WARN_ROLE_1 = "1472675083339169813";
+const WARN_ROLE_2 = "1472675086741012637";
+const WARN_ROLE_3 = "1472675097771774104";
+
+// Chargement du fichier warns.json
+let warns = {};
+if (fs.existsSync("./warns.json")) {
+  warns = JSON.parse(fs.readFileSync("./warns.json", "utf8"));
+}
 
 client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+  if (interaction.commandName !== "warn") return;
 
-  // ---------- SLASH /staffpanel ----------
-  if (interaction.isChatInputCommand()) {
-    if (interaction.commandName !== "staffpanel") return;
-
-    if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
-      return interaction.reply({
-        content: "⛔ Tu n’as pas accès au panel staff.",
-        ephemeral: true
-      });
-    }
-
-    const embed = new EmbedBuilder()
-      .setColor("#8E44AD")
-      .setTitle("🟣 Panel Staff — Nancy RP")
-      .setDescription(
-        [
-          "Bienvenue dans le **Panel Staff**.",
-          "",
-          "💠 **Sections disponibles :**",
-          "> 🔧 Modération",
-          "> 🎫 Tickets",
-          "> 🛡️ Sécurité",
-          "> 🧰 Outils Staff",
-          "",
-          "Utilise les boutons ci‑dessous pour naviguer."
-        ].join("\n")
-      )
-      .setFooter({ text: "🌺 Nancy RP • Security Core" })
-      .setTimestamp();
-
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId("panel_moderation")
-        .setLabel("🔧 Modération")
-        .setStyle(ButtonStyle.Primary),
-
-      new ButtonBuilder()
-        .setCustomId("panel_tickets")
-        .setLabel("🎫 Tickets")
-        .setStyle(ButtonStyle.Primary),
-
-      new ButtonBuilder()
-        .setCustomId("panel_securite")
-        .setLabel("🛡️ Sécurité")
-        .setStyle(ButtonStyle.Primary),
-
-      new ButtonBuilder()
-        .setCustomId("panel_outils")
-        .setLabel("🧰 Outils")
-        .setStyle(ButtonStyle.Primary)
-    );
-
+  // Vérification staff
+  if (!interaction.member.roles.cache.has("1482533960557789214")) {
     return interaction.reply({
-      embeds: [embed],
-      components: [row],
+      content: "⛔ Tu n’as pas accès à cette commande.",
       ephemeral: true
     });
   }
 
-  // ---------- BOUTONS PANEL ----------
-  if (interaction.isButton()) {
-    if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
-      return interaction.reply({
-        content: "⛔ Tu n’as pas accès à cette section.",
-        ephemeral: true
-      });
-    }
+  const user = interaction.options.getUser("membre");
+  const member = interaction.guild.members.cache.get(user.id);
+  const reason = interaction.options.getString("raison") || "Aucune raison fournie";
 
-    let embed;
+  // Initialisation si pas encore warn
+  if (!warns[user.id]) warns[user.id] = 0;
 
-    switch (interaction.customId) {
+  // Ajout du warn
+  warns[user.id]++;
 
-      case "panel_moderation":
-        embed = new EmbedBuilder()
-          .setColor("#8E44AD")
-          .setTitle("🔧 Section Modération")
-          .setDescription(
-            [
-              "💠 **Outils disponibles :**",
-              "> • /warn",
-              "> • /unwarn",
-              "> • /warnings",
-              "> • /mute",
-              "> • /unmute",
-              "> • /kick",
-              "> • /ban",
-              "> • /unban"
-            ].join("\n")
-          )
-          .setFooter({ text: "🌺 Nancy RP • Security Core" });
-        break;
+  // Sauvegarde
+  fs.writeFileSync("./warns.json", JSON.stringify(warns, null, 2));
 
-      case "panel_tickets":
-        embed = new EmbedBuilder()
-          .setColor("#8E44AD")
-          .setTitle("🎫 Section Tickets")
-          .setDescription(
-            [
-              "💠 **Catégories :**",
-              "> • Signalement Staff",
-              "> • Signalement Joueur",
-              "> • Demande d’Unban",
-              "> • Partenariat",
-              "> • Demande spéciale",
-              "> • Demande Fondation"
-            ].join("\n")
-          )
-          .setFooter({ text: "🌺 Nancy RP • Security Core" });
-        break;
+  // Attribution du rôle selon le nombre de warns
+  let roleToAdd = null;
 
-      case "panel_securite":
-        embed = new EmbedBuilder()
-          .setColor("#8E44AD")
-          .setTitle("🛡️ Section Sécurité")
-          .setDescription(
-            [
-              "💠 **Outils :**",
-              "> • n.raid",
-              "> • n.unraid",
-              "> • n.raidsim",
-              "> • n.antibot on/off",
-              "> • Whitelist bots"
-            ].join("\n")
-          )
-          .setFooter({ text: "🌺 Nancy RP • Security Core" });
-        break;
+  if (warns[user.id] === 1) roleToAdd = WARN_ROLE_1;
+  if (warns[user.id] === 2) roleToAdd = WARN_ROLE_2;
+  if (warns[user.id] === 3) roleToAdd = WARN_ROLE_3;
 
-      case "panel_outils":
-        embed = new EmbedBuilder()
-          .setColor("#8E44AD")
-          .setTitle("🧰 Section Outils Staff")
-          .setDescription(
-            [
-              "💠 **Outils :**",
-              "> • /save",
-              "> • /load",
-              "> • /giveaway",
-              "> • /help",
-              "> • Panel staff"
-            ].join("\n")
-          )
-          .setFooter({ text: "🌺 Nancy RP • Security Core" });
-        break;
-    }
-
-    return interaction.reply({
-      embeds: [embed],
-      ephemeral: true
-    });
+  if (roleToAdd) {
+    await member.roles.add(roleToAdd).catch(() => {});
   }
+
+  // Embed de confirmation
+  const embed = new EmbedBuilder()
+    .setColor("#8E44AD")
+    .setTitle("⚠️ Avertissement appliqué")
+    .setDescription(
+      [
+        `👤 **Membre :** ${user}`,
+        `📝 **Raison :** ${reason}`,
+        `🔢 **Nombre total de warns :** ${warns[user.id]}`,
+        "",
+        roleToAdd
+          ? `🎯 **Rôle ajouté :** <@&${roleToAdd}>`
+          : "❗ Aucun rôle supplémentaire (limite atteinte)"
+      ].join("\n")
+    )
+    .setFooter({ text: "🌺 Nancy RP • Security Core" })
+    .setTimestamp();
+
+  return interaction.reply({
+    embeds: [embed],
+    ephemeral: true
+  });
 });
 
 // ======================================================
