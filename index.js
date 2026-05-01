@@ -42,13 +42,12 @@ const PREFIX = "n.";
 
 // Whitelist bots
 const BOT_WHITELIST = [
-  "466578580449525760",
-  "614755681936867328",
-  "1184200228266573854",
+  "318312854816161792",
   "1475133951625658551",
-  "318312854816161792"
+  "1184200228266573854",
+  "614755681936867328",
+  "466578580449525760"
 ];
-
 
 // Tickets catégories
 const categories = {
@@ -56,8 +55,7 @@ const categories = {
   "1488679203590373557": "unban",
   "1488681903006421172": "partenariat",
   "1488681966990528593": "autre",
-  "1488683247998079006": "report_joueur",
-  "1495810265474928732": "fondation"
+  "1488683247998079006": "report_joueur"
 };
 
 // États internes
@@ -246,10 +244,6 @@ client.on("channelCreate", async (channel) => {
     let message = "";
 
     switch (type) {
-
-      // ======================================================
-      // 🔮 SIGNALEMENT STAFF
-      // ======================================================
       case "report_staff":
         message = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -280,9 +274,6 @@ https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/N
         `;
         break;
 
-      // ======================================================
-      // 🔮 DEMANDE D'UNBAN
-      // ======================================================
       case "unban":
         message = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -312,9 +303,6 @@ https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/N
         `;
         break;
 
-      // ======================================================
-      // 🔮 PARTENARIAT
-      // ======================================================
       case "partenariat":
         message = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -347,9 +335,6 @@ https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/N
         `;
         break;
 
-      // ======================================================
-      // 🔮 DEMANDE SPÉCIALE
-      // ======================================================
       case "autre":
         message = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -382,9 +367,6 @@ https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/N
         `;
         break;
 
-      // ======================================================
-      // 🔮 SIGNALEMENT JOUEUR
-      // ======================================================
       case "report_joueur":
         message = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -413,41 +395,6 @@ https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/N
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
         `;
         break;
-
-      // ======================================================
-      // 🔮 DEMANDE À LA FONDATION (NOUVEAU)
-      // ======================================================
-      case "fondation":
-        message = `
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔮 **FORMULAIRE — DEMANDE À LA FONDATION**
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🟣 Ce ticket est destiné aux demandes importantes nécessitant  
-l’intervention directe de **La Fondation Nancy RP**.
-
-💜 **Identité (Pseudo IG) :**  
-> *(Votre pseudo)*
-
-🆔 **Identité Discord :**  
-> *(Votre tag Discord)*
-
-🎯 **Objet de la demande :**  
-> *(Ce que vous souhaitez obtenir ou faire valider)*
-
-📄 **Description complète :**  
-> *(Expliquez clairement votre situation et votre requête)*
-
-📎 **Documents / Preuves (si nécessaire) :**  
-> *(Screens, fichiers, vidéos…)*
-
-🔒 Votre demande sera étudiée par un membre de la Fondation.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/NANCY_RP_4.gif
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-        `;
-        break;
     }
 
     if (!message) return;
@@ -455,50 +402,6 @@ https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/N
     await channel.send(message);
   }, 2000);
 });
-
-
-// ======================================================
-// 🟣 COMMANDES PREFIX — VERSION PREMIUM ULTRA VIOLET LUXE
-// ======================================================
-
-client.on("messageCreate", async (message) => {
-  if (message.author.bot || !message.guild) return;
-  if (!message.content.startsWith(PREFIX)) return;
-
-  const args = message.content.slice(PREFIX.length).trim().split(/\s+/);
-  const cmd = args.shift()?.toLowerCase();
-
-  // ======================================================
-  // 🟣 HELP — n.help
-  // ======================================================
-  if (cmd === "help") {
-    const embed = embedInfo(
-      "Aide Nancy RP",
-      [
-        "🟣 **Préfixe :** `n.`",
-        "",
-        "🔮 **Protection & RAID**",
-        "`n.raid` – Active le RAID Mode (confirmation requise)",
-        "`n.unraid` – Désactive le RAID Mode",
-        "`n.raidsim` – Simulation de RAID",
-        "",
-        "🟣 **Sécurité bots**",
-        "`n.antibot on` – Active l’anti-bot",
-        "`n.antibot off` – Désactive l’anti-bot",
-        "",
-        "💜 **Sauvegarde serveur**",
-        "`n.save` – Sauvegarde la structure",
-        "`n.load` – Restaure la dernière sauvegarde",
-        "",
-        "🎁 **Giveaway**",
-        "Utilise `/giveaway` (Fondation + rôle giveaway)",
-        "",
-        "🔮 **Version slash :** `/help`"
-      ].join("\n")
-    );
-
-    return message.channel.send({ embeds: [embed] });
-  }
 
   // ======================================================
   // 🛡️ COMMANDES OWNER UNIQUEMENT
@@ -633,27 +536,10 @@ client.on("messageCreate", async (message) => {
   // ======================================================
   // 🟡 n.raidsim
   // ======================================================
-if (cmd === "raidsim") {
-  const embed = embedRaidAlert(true);
-
-  // Envoi dans le salon actuel
-  await message.channel.send({ embeds: [embed] });
-
-  // Envoi dans le salon d’annonce
-  const announce = message.guild.channels.cache.get(ANNOUNCE_CHANNEL_ID);
-  if (announce) {
-    await announce.send({
-      embeds: [
-        embedInfo(
-          "Simulation RAID — Notification",
-          "🟡 Une **simulation de RAID** vient d’être effectuée.\nAucune action réelle n’a été appliquée."
-        )
-      ]
-    });
+  if (cmd === "raidsim") {
+    const embed = embedRaidAlert(true);
+    return message.channel.send({ embeds: [embed] });
   }
-
-  return;
-}
 
   // ======================================================
   // 🤖 n.antibot
@@ -845,10 +731,27 @@ client.on("interactionCreate", async (interaction) => {
   // ======================================================
   // 🟡 /raidsim
   // ======================================================
-  if (commandName === "raidsim") {
-    const embed = embedRaidAlert(true);
-    return interaction.reply({ embeds: [embed], ephemeral: true });
+  if (cmd === "raidsim") {
+  const embed = embedRaidAlert(true);
+
+  // Envoi dans le salon actuel
+  await message.channel.send({ embeds: [embed] });
+
+  // Envoi dans le salon d’annonce
+  const announce = message.guild.channels.cache.get(ANNOUNCE_CHANNEL_ID);
+  if (announce) {
+    await announce.send({
+      embeds: [
+        embedInfo(
+          "Simulation RAID — Notification",
+          "🟡 Une **simulation de RAID** vient d’être effectuée.\nAucune action réelle n’a été appliquée."
+        )
+      ]
+    });
   }
+
+  return;
+}
 
   // ======================================================
   // 🤖 /antibot
@@ -1156,14 +1059,13 @@ client.on("messageDelete", (message) => {
 // ======================================================
 // 🚀 READY — Enregistrement des commandes slash
 // ======================================================
-
 client.on("ready", async () => {
   console.log(`🟣 Connecté en tant que ${client.user.tag}`);
 
-  // Récupération du serveur Nancy RP
+  // On récupère ton serveur Nancy RP
   const guild = client.guilds.cache.get("1472637775281918123");
   if (!guild) {
-    console.log("❌ Serveur Nancy RP introuvable. Vérifie l'ID.");
+    console.log("❌ Impossible de trouver le serveur Nancy RP.");
     return;
   }
 
@@ -1232,6 +1134,11 @@ client.on("ready", async () => {
         }
       ]
     },
+
+    // -------------------------
+    // 🔧 Commandes Modération
+    // -------------------------
+
     {
       name: "warn",
       description: "Avertit un membre",
@@ -1374,9 +1281,9 @@ client.on("guildMemberAdd", async (member) => {
     .setColor(COLOR_SUCCESS)
     .setTitle("💜 Nouvelle arrivée")
     .setDescription(
-      `🌺 ***${member.user.username}** vient de rejoindre **Nancy RP***.\n\n` +
+      `🟣 ***${member.user.username}** vient de rejoindre **Nancy RP***.\n\n` +
       `- ***Bienvenue à toi !***\n` +
-      `🌺 *Nous te souhaitons une **excellente expérience sur le serveur***.`
+      `🌺 *Nous te souhaitons une **excellente expérience** sur le serveur*.`
     )
     .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
     .setImage(NANCY_GIF)
@@ -1408,9 +1315,9 @@ client.on("guildMemberRemove", async (member) => {
     .setColor(COLOR_ERROR)
     .setTitle("🛑 Départ d’un membre")
     .setDescription(
-      `🌺 ***${member.user.username}** a quitté **Nancy RP***.\n\n` +
+      `🟣 ***${member.user.username}** a quitté **Nancy RP***.\n\n` +
       `- ***Temps passé sur le serveur :*** ${durationText}\n\n` +
-      `🌺 *Nous lui souhaitons une **bonne continuation***.`
+      `🟣 *Nous lui souhaitons une bonne continuation*.`
     )
     .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
     .setImage(NANCY_GIF)
@@ -1424,27 +1331,180 @@ client.on("guildMemberRemove", async (member) => {
 });
 
 // ======================================================
-// 🟣 BLOC 9 — Warn avec rôles automatiques (1 → 2 → 3)
+// 🟣 BLOC 7 — PANEL STAFF (Slash Only + Éphémère)
 // ======================================================
 
-const fs = require("fs");
+// CONFIG
+const STAFF_ROLE_ID = "1482533960557789214"; // rôle staff autorisé
 
-// Rôles warn
-const WARN_ROLE_1 = "1472675083339169813";
-const WARN_ROLE_2 = "1472675086741012637";
-const WARN_ROLE_3 = "1472675097771774104";
-
-// Chargement du fichier warns.json
-let warns = {};
-if (fs.existsSync("./warns.json")) {
-  warns = JSON.parse(fs.readFileSync("./warns.json", "utf8"));
-}
+// ======================================================
+// 🟣 COMMANDE SLASH — /panel (100% ÉPHÉMÈRE)
+// ======================================================
 
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
-  if (interaction.commandName !== "warn") return;
 
-  // Vérification staff
+  if (interaction.commandName === "panel") {
+    if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
+      return interaction.reply({ content: "⛔ Tu n’as pas accès au panel staff.", ephemeral: true });
+    }
+
+    sendStaffPanel(interaction, true); // panel invisible pour les autres
+  }
+});
+
+// ======================================================
+// 🟣 FONCTION — ENVOI DU PANEL STAFF (ÉPHÉMÈRE)
+// ======================================================
+
+function sendStaffPanel(interaction, ephemeral) {
+  const embed = new EmbedBuilder()
+    .setColor("#8E44AD")
+    .setTitle("🟣 Panel Staff — Nancy RP")
+    .setDescription(
+      [
+        "Bienvenue dans le **Panel Staff**.",
+        "",
+        "💠 **Sections disponibles :**",
+        "> 🔧 Modération",
+        "> 🎫 Tickets",
+        "> 🛡️ Sécurité",
+        "> 🧰 Outils Staff",
+        "",
+        "Utilise les boutons ci‑dessous pour naviguer."
+      ].join("\n")
+    )
+    .setFooter({ text: "🌺 Nancy RP • Security Core" })
+    .setTimestamp();
+
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("panel_moderation")
+      .setLabel("🔧 Modération")
+      .setStyle(ButtonStyle.Primary),
+
+    new ButtonBuilder()
+      .setCustomId("panel_tickets")
+      .setLabel("🎫 Tickets")
+      .setStyle(ButtonStyle.Primary),
+
+    new ButtonBuilder()
+      .setCustomId("panel_securite")
+      .setLabel("🛡️ Sécurité")
+      .setStyle(ButtonStyle.Primary),
+
+    new ButtonBuilder()
+      .setCustomId("panel_outils")
+      .setLabel("🧰 Outils")
+      .setStyle(ButtonStyle.Primary)
+  );
+
+  interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+}
+
+// ======================================================
+// 🟣 PANEL STAFF — SOUS-MENUS (ÉPHÉMÈRES)
+// ======================================================
+
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isButton()) return;
+
+  if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
+    return interaction.reply({ content: "⛔ Tu n’as pas accès à cette section.", ephemeral: true });
+  }
+
+  let embed;
+
+  switch (interaction.customId) {
+
+    case "panel_moderation":
+      embed = new EmbedBuilder()
+        .setColor("#8E44AD")
+        .setTitle("🔧 Section Modération")
+        .setDescription(
+          [
+            "💠 **Outils disponibles :**",
+            "> • /warn",
+            "> • /unwarn",
+            "> • /warnings",
+            "> • /mute",
+            "> • /unmute",
+            "> • /kick",
+            "> • /ban",
+            "> • /unban"
+          ].join("\n")
+        )
+        .setFooter({ text: "🌺 Nancy RP • Security Core" });
+      break;
+
+    case "panel_tickets":
+      embed = new EmbedBuilder()
+        .setColor("#8E44AD")
+        .setTitle("🎫 Section Tickets")
+        .setDescription(
+          [
+            "💠 **Catégories :**",
+            "> • Signalement Staff",
+            "> • Signalement Joueur",
+            "> • Demande d’Unban",
+            "> • Partenariat",
+            "> • Demande spéciale",
+            "> • Demande Fondation"
+          ].join("\n")
+        )
+        .setFooter({ text: "🌺 Nancy RP • Security Core" });
+      break;
+
+    case "panel_securite":
+      embed = new EmbedBuilder()
+        .setColor("#8E44AD")
+        .setTitle("🛡️ Section Sécurité")
+        .setDescription(
+          [
+            "💠 **Outils :**",
+            "> • n.raid",
+            "> • n.unraid",
+            "> • n.raidsim",
+            "> • n.antibot on/off",
+            "> • Whitelist bots"
+          ].join("\n")
+        )
+        .setFooter({ text: "🌺 Nancy RP • Security Core" });
+      break;
+
+    case "panel_outils":
+      embed = new EmbedBuilder()
+        .setColor("#8E44AD")
+        .setTitle("🧰 Section Outils Staff")
+        .setDescription(
+          [
+            "💠 **Outils :**",
+            "> • /save",
+            "> • /load",
+            "> • /giveaway",
+            "> • /help",
+            "> • Panel staff"
+          ].join("\n")
+        )
+        .setFooter({ text: "🌺 Nancy RP • Security Core" });
+      break;
+  }
+
+  interaction.reply({ embeds: [embed], ephemeral: true });
+});
+
+// ======================================================
+// 🟣 BLOC 8 — Warn / Mute / Kick / Ban
+// ======================================================
+
+const ms = require("ms"); // Nécessaire pour convertir les durées (ex: 10m, 1h)
+
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+
+  const cmd = interaction.commandName;
+
+  // Vérification rôle staff
   if (!interaction.member.roles.cache.has("1482533960557789214")) {
     return interaction.reply({
       content: "⛔ Tu n’as pas accès à cette commande.",
@@ -1452,55 +1512,33 @@ client.on("interactionCreate", async (interaction) => {
     });
   }
 
-  const user = interaction.options.getUser("membre");
-  const member = interaction.guild.members.cache.get(user.id);
-  const reason = interaction.options.getString("raison") || "Aucune raison fournie";
+  // ======================================================
+  // 🟣 /warn
+  // ======================================================
+  if (cmd === "warn") {
+    const user = interaction.options.getUser("membre");
+    const reason = interaction.options.getString("raison") || "Aucune raison fournie";
 
-  // Initialisation si pas encore warn
-  if (!warns[user.id]) warns[user.id] = 0;
-
-  // Ajout du warn
-  warns[user.id]++;
-
-  // Sauvegarde
-  fs.writeFileSync("./warns.json", JSON.stringify(warns, null, 2));
-
-  // Attribution du rôle selon le nombre de warns
-  let roleToAdd = null;
-
-  if (warns[user.id] === 1) roleToAdd = WARN_ROLE_1;
-  if (warns[user.id] === 2) roleToAdd = WARN_ROLE_2;
-  if (warns[user.id] === 3) roleToAdd = WARN_ROLE_3;
-
-  if (roleToAdd) {
-    await member.roles.add(roleToAdd).catch(() => {});
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setColor("#8E44AD")
+          .setTitle("⚠️ Avertissement appliqué")
+          .setDescription(
+            [
+              `👤 **Membre :** ${user}`,
+              `📝 **Raison :** ${reason}`,
+              "",
+              "L’avertissement a été enregistré."
+            ].join("\n")
+          )
+          .setFooter({ text: "🌺 Nancy RP • Security Core" })
+      ],
+      ephemeral: true
+    });
   }
 
-  // Embed de confirmation
-  const embed = new EmbedBuilder()
-    .setColor("#8E44AD")
-    .setTitle("⚠️ Avertissement appliqué")
-    .setDescription(
-      [
-        `👤 **Membre :** ${user}`,
-        `📝 **Raison :** ${reason}`,
-        `🔢 **Nombre total de warns :** ${warns[user.id]}`,
-        "",
-        roleToAdd
-          ? `🎯 **Rôle ajouté :** <@&${roleToAdd}>`
-          : "❗ Aucun rôle supplémentaire (limite atteinte)"
-      ].join("\n")
-    )
-    .setFooter({ text: "🌺 Nancy RP • Security Core" })
-    .setTimestamp();
-
-  return interaction.reply({
-    embeds: [embed],
-    ephemeral: true
-  });
-});
-
-// ======================================================
+  // ======================================================
 // 🟣 /unwarn (corrigé)
 // ======================================================
 if (cmd === "unwarn") {
@@ -1532,6 +1570,73 @@ if (cmd === "unwarn") {
 
   return interaction.reply({
     content: `✔️ Warn retiré à ${user}. Warns restants : **${warns[user.id]}**`,
+    ephemeral: true
+  });
+}
+
+  // ======================================================
+  // 🟣 /kick
+  // ======================================================
+  if (cmd === "kick") {
+    const member = interaction.options.getMember("membre");
+    const reason = interaction.options.getString("raison") || "Aucune raison fournie";
+
+    try {
+      await member.kick(reason);
+
+      return interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setColor("#8E44AD")
+            .setTitle("👢 Expulsion effectuée")
+            .setDescription(
+              [
+                `👤 **Membre :** ${member.user.tag}`,
+                `📝 **Raison :** ${reason}`
+              ].join("\n")
+            )
+            .setFooter({ text: "🌺 Nancy RP • Security Core" })
+        ],
+        ephemeral: true
+      });
+    } catch (err) {
+      return interaction.reply({
+        content: "❌ Impossible de kick ce membre.",
+        ephemeral: true
+      });
+    }
+  }
+
+  // ======================================================
+// 🟣 /ban (corrigé)
+// ======================================================
+if (cmd === "ban") {
+  const user = interaction.options.getUser("membre");
+  const reason = interaction.options.getString("raison") || "Aucune raison fournie";
+
+  try {
+    await interaction.guild.members.ban(user.id, { reason });
+  } catch (err) {
+    return interaction.reply({
+      content: "❌ Impossible de bannir ce membre (permissions ou hiérarchie de rôles).",
+      ephemeral: true
+    });
+  }
+
+  return interaction.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setColor("#8E44AD")
+        .setTitle("🔨 Bannissement effectué")
+        .setDescription(
+          [
+            `👤 **Membre :** ${user.tag}`,
+            `📝 **Raison :** ${reason}`
+          ].join("\n")
+        )
+        .setFooter({ text: "🌺 Nancy RP • Security Core" })
+        .setTimestamp()
+    ],
     ephemeral: true
   });
 }
@@ -1580,40 +1685,6 @@ if (cmd === "mute") {
 }
 
 // ======================================================
-// 🟣 /ban (corrigé)
-// ======================================================
-if (cmd === "ban") {
-  const user = interaction.options.getUser("membre");
-  const reason = interaction.options.getString("raison") || "Aucune raison fournie";
-
-  try {
-    await interaction.guild.members.ban(user.id, { reason });
-  } catch (err) {
-    return interaction.reply({
-      content: "❌ Impossible de bannir ce membre (permissions ou hiérarchie de rôles).",
-      ephemeral: true
-    });
-  }
-
-  return interaction.reply({
-    embeds: [
-      new EmbedBuilder()
-        .setColor("#8E44AD")
-        .setTitle("🔨 Bannissement effectué")
-        .setDescription(
-          [
-            `👤 **Membre :** ${user.tag}`,
-            `📝 **Raison :** ${reason}`
-          ].join("\n")
-        )
-        .setFooter({ text: "🌺 Nancy RP • Security Core" })
-        .setTimestamp()
-    ],
-    ephemeral: true
-  });
-}
-
-// ======================================================
 // 🟣 /warnings (corrigé)
 // ======================================================
 if (cmd === "warnings") {
@@ -1649,5 +1720,3 @@ if (cmd === "warnings") {
 // ======================================================
 
 client.login(process.env.TOKEN);
-
-
