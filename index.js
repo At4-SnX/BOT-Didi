@@ -2,7 +2,6 @@
 // 🟣 BLOC 1 — IMPORTS & CONFIG GLOBALE
 // ======================================================
 
-require("dotenv").config();
 const fs = require("fs");
 const ms = require("ms");
 const {
