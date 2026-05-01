@@ -1311,6 +1311,191 @@ client.on("guildMemberRemove", async (member) => {
 });
 
 // ======================================================
+// 🟣 BLOC 7 — PANEL STAFF (Embed Premium + Boutons)
+// ======================================================
+
+// CONFIG
+const STAFF_PANEL_CHANNEL_ID = "ID_DU_SALON_PANEL"; // salon où envoyer le panel
+const STAFF_ROLE_ID = "ID_DU_ROLE_STAFF"; // rôle staff autorisé
+
+// ======================================================
+// 🟣 COMMANDE PREFIX — n.panel
+// ======================================================
+
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
+  if (!message.content.startsWith(PREFIX)) return;
+
+  const args = message.content.slice(PREFIX.length).trim().split(/\s+/);
+  const cmd = args.shift()?.toLowerCase();
+
+  if (cmd === "panel") {
+    if (!message.member.roles.cache.has(STAFF_ROLE_ID)) {
+      return message.reply("⛔ Tu n’as pas accès au panel staff.");
+    }
+
+    sendStaffPanel(message.channel);
+  }
+});
+
+// ======================================================
+// 🟣 COMMANDE SLASH — /panel
+// ======================================================
+
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+
+  if (interaction.commandName === "panel") {
+    if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
+      return interaction.reply({ content: "⛔ Tu n’as pas accès au panel staff.", ephemeral: true });
+    }
+
+    sendStaffPanel(interaction.channel);
+    interaction.reply({ content: "🟣 Panel staff envoyé.", ephemeral: true });
+  }
+});
+
+// ======================================================
+// 🟣 FONCTION — ENVOI DU PANEL STAFF
+// ======================================================
+
+function sendStaffPanel(channel) {
+  const embed = new EmbedBuilder()
+    .setColor("#8E44AD")
+    .setTitle("🟣 Panel Staff — Nancy RP")
+    .setDescription(
+      [
+        "Bienvenue dans le **Panel Staff**.",
+        "",
+        "💠 **Sections disponibles :**",
+        "> 🔧 Modération",
+        "> 🎫 Tickets",
+        "> 🛡️ Sécurité",
+        "> 🧰 Outils Staff",
+        "",
+        "Utilise les boutons ci‑dessous pour naviguer."
+      ].join("\n")
+    )
+    .setFooter({ text: "🌺 Nancy RP • Security Core" })
+    .setTimestamp();
+
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("panel_moderation")
+      .setLabel("🔧 Modération")
+      .setStyle(ButtonStyle.Primary),
+
+    new ButtonBuilder()
+      .setCustomId("panel_tickets")
+      .setLabel("🎫 Tickets")
+      .setStyle(ButtonStyle.Primary),
+
+    new ButtonBuilder()
+      .setCustomId("panel_securite")
+      .setLabel("🛡️ Sécurité")
+      .setStyle(ButtonStyle.Primary),
+
+    new ButtonBuilder()
+      .setCustomId("panel_outils")
+      .setLabel("🧰 Outils")
+      .setStyle(ButtonStyle.Primary)
+  );
+
+  channel.send({ embeds: [embed], components: [row] });
+}
+
+// ======================================================
+// 🟣 PANEL STAFF — SOUS-MENUS (Embed Premium)
+// ======================================================
+
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isButton()) return;
+
+  if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
+    return interaction.reply({ content: "⛔ Tu n’as pas accès à cette section.", ephemeral: true });
+  }
+
+  let embed;
+
+  switch (interaction.customId) {
+
+    case "panel_moderation":
+      embed = new EmbedBuilder()
+        .setColor("#8E44AD")
+        .setTitle("🔧 Section Modération")
+        .setDescription(
+          [
+            "💠 **Outils disponibles :**",
+            "> • /warn",
+            "> • /unwarn",
+            "> • /warnings",
+            "> • /mute",
+            "> • /unmute",
+            "> • /kick",
+            "> • /ban",
+            "> • /unban"
+          ].join("\n")
+        )
+        .setFooter({ text: "🌺 Nancy RP • Security Core" });
+      break;
+
+    case "panel_tickets":
+      embed = new EmbedBuilder()
+        .setColor("#8E44AD")
+        .setTitle("🎫 Section Tickets")
+        .setDescription(
+          [
+            "💠 **Catégories :**",
+            "> • Signalement Staff",
+            "> • Signalement Joueur",
+            "> • Demande d’Unban",
+            "> • Partenariat",
+            "> • Demande spéciale",
+            "> • Demande Fondation"
+          ].join("\n")
+        )
+        .setFooter({ text: "🌺 Nancy RP • Security Core" });
+      break;
+
+    case "panel_securite":
+      embed = new EmbedBuilder()
+        .setColor("#8E44AD")
+        .setTitle("🛡️ Section Sécurité")
+        .setDescription(
+          [
+            "💠 **Outils :**",
+            "> • n.raid",
+            "> • n.unraid",
+            "> • n.raidsim",
+            "> • n.antibot on/off",
+            "> • Whitelist bots"
+          ].join("\n")
+        )
+        .setFooter({ text: "🌺 Nancy RP • Security Core" });
+      break;
+
+    case "panel_outils":
+      embed = new EmbedBuilder()
+        .setColor("#8E44AD")
+        .setTitle("🧰 Section Outils Staff")
+        .setDescription(
+          [
+            "💠 **Outils :**",
+            "> • /save",
+            "> • /load",
+            "> • /giveaway",
+            "> • /help",
+            "> • Panel staff"
+          ].join("\n")
+        )
+        .setFooter({ text: "🌺 Nancy RP • Security Core" });
+      break;
+  }
+
+  interaction.reply({ embeds: [embed], ephemeral: true });
+});
+
+// ======================================================
 // 🔑 LOGIN FINAL
 // ======================================================
 
