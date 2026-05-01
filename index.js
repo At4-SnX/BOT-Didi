@@ -207,6 +207,124 @@ async function restoreServer(guild, snapshot) {
   }
 }
 
+client.on("ready", async () => {
+  const commands = [
+    {
+      name: "help",
+      description: "Affiche l’aide du bot"
+    },
+    {
+      name: "panel",
+      description: "Ouvre le panel staff"
+    },
+    {
+      name: "raid",
+      description: "Active le RAID Mode"
+    },
+    {
+      name: "unraid",
+      description: "Désactive le RAID Mode"
+    },
+    {
+      name: "raidsim",
+      description: "Simule une alerte RAID"
+    },
+    {
+      name: "antibot",
+      description: "Active ou désactive l’anti-bot",
+      options: [
+        {
+          name: "mode",
+          description: "on/off",
+          type: 3,
+          required: true,
+          choices: [
+            { name: "on", value: "on" },
+            { name: "off", value: "off" }
+          ]
+        }
+      ]
+    },
+    {
+      name: "save",
+      description: "Sauvegarde la structure du serveur"
+    },
+    {
+      name: "load",
+      description: "Restaure la structure du serveur"
+    },
+    {
+      name: "giveaway",
+      description: "Lance un giveaway",
+      options: [
+        {
+          name: "durée",
+          description: "Durée en minutes",
+          type: 4,
+          required: true
+        },
+        {
+          name: "récompense",
+          description: "Nom du lot",
+          type: 3,
+          required: true
+        }
+      ]
+    },
+    {
+      name: "warn",
+      description: "Ajoute un avertissement",
+      options: [
+        { name: "membre", description: "Membre", type: 6, required: true },
+        { name: "raison", description: "Raison", type: 3, required: false }
+      ]
+    },
+    {
+      name: "unwarn",
+      description: "Retire un avertissement",
+      options: [
+        { name: "membre", description: "Membre", type: 6, required: true }
+      ]
+    },
+    {
+      name: "warnings",
+      description: "Affiche les warns d’un membre",
+      options: [
+        { name: "membre", description: "Membre", type: 6, required: true }
+      ]
+    },
+    {
+      name: "kick",
+      description: "Kick un membre",
+      options: [
+        { name: "membre", description: "Membre", type: 6, required: true },
+        { name: "raison", description: "Raison", type: 3, required: false }
+      ]
+    },
+    {
+      name: "ban",
+      description: "Ban un membre",
+      options: [
+        { name: "membre", description: "Membre", type: 6, required: true },
+        { name: "raison", description: "Raison", type: 3, required: false }
+      ]
+    },
+    {
+      name: "mute",
+      description: "Mute un membre",
+      options: [
+        { name: "membre", description: "Membre", type: 6, required: true },
+        { name: "durée", description: "Ex: 10m, 1h", type: 3, required: true },
+        { name: "raison", description: "Raison", type: 3, required: false }
+      ]
+    }
+  ];
+
+  await client.application.commands.set(commands);
+  console.log("🟣 Slash commands enregistrées !");
+});
+
+
 // ======================================================
 // 🟣 BLOC 2 — TICKETS (Messages esthétiques sans embeds)
 // ======================================================
@@ -1119,7 +1237,6 @@ client.on("interactionCreate", async (interaction) => {
 client.on("ready", async () => {
   console.log(`🟣 Connecté en tant que ${client.user.tag}`);
 
-  // ID du serveur Nancy RP
   const guild = client.guilds.cache.get("1472637775281918123");
   if (!guild) {
     console.log("❌ Impossible de trouver le serveur Nancy RP.");
@@ -1128,7 +1245,7 @@ client.on("ready", async () => {
 
   console.log("🟣 Enregistrement des commandes slash locales...");
 
-  await guild.commands.set([
+  const commands = [
     // ======================================================
     // 🟣 Commandes générales
     // ======================================================
@@ -1218,131 +1335,54 @@ client.on("ready", async () => {
       name: "warn",
       description: "Avertit un membre",
       options: [
-        {
-          name: "membre",
-          description: "Le membre à avertir",
-          type: 6,
-          required: true
-        },
-        {
-          name: "raison",
-          description: "Raison du warn",
-          type: 3,
-          required: false
-        }
+        { name: "membre", description: "Le membre à avertir", type: 6, required: true },
+        { name: "raison", description: "Raison du warn", type: 3, required: false }
       ]
     },
     {
       name: "unwarn",
       description: "Retire un avertissement à un membre",
       options: [
-        {
-          name: "membre",
-          description: "Le membre à unwarn",
-          type: 6,
-          required: true
-        }
+        { name: "membre", description: "Le membre à unwarn", type: 6, required: true }
       ]
     },
     {
       name: "warnings",
       description: "Affiche le nombre de warns d'un membre",
       options: [
-        {
-          name: "membre",
-          description: "Le membre à vérifier",
-          type: 6,
-          required: true
-        }
+        { name: "membre", description: "Le membre à vérifier", type: 6, required: true }
       ]
     },
     {
       name: "mute",
       description: "Mute un membre avec une durée",
       options: [
-        {
-          name: "membre",
-          description: "Le membre à mute",
-          type: 6,
-          required: true
-        },
-        {
-          name: "durée",
-          description: "Exemple : 10m, 1h, 2d",
-          type: 3,
-          required: true
-        },
-        {
-          name: "raison",
-          description: "Raison du mute",
-          type: 3,
-          required: false
-        }
+        { name: "membre", description: "Le membre à mute", type: 6, required: true },
+        { name: "durée", description: "Exemple : 10m, 1h, 2d", type: 3, required: true },
+        { name: "raison", description: "Raison du mute", type: 3, required: false }
       ]
     },
     {
       name: "kick",
       description: "Kick un membre",
       options: [
-        {
-          name: "membre",
-          description: "Le membre à kick",
-          type: 6,
-          required: true
-        },
-        {
-          name: "raison",
-          description: "Raison du kick",
-          type: 3,
-          required: false
-        }
+        { name: "membre", description: "Le membre à kick", type: 6, required: true },
+        { name: "raison", description: "Raison du kick", type: 3, required: false }
       ]
     },
     {
       name: "ban",
       description: "Ban un membre",
       options: [
-        {
-          name: "membre",
-          description: "Le membre à bannir",
-          type: 6,
-          required: true
-        },
-        {
-          name: "raison",
-          description: "Raison du ban",
-          type: 3,
-          required: false
-        }
+        { name: "membre", description: "Le membre à bannir", type: 6, required: true },
+        { name: "raison", description: "Raison du ban", type: 3, required: false }
       ]
     }
-  ]);
+  ];
 
+  await guild.commands.set(commands);
   console.log("🟣 Commandes slash LOCALES enregistrées (instantanées).");
 });
-
-// ======================================================
-// 🟣 BLOC 8 — ARRIVÉES & DÉPARTS (Salons séparés + GIF + durée)
-// ======================================================
-
-// Salon d'arrivée
-const JOIN_CHANNEL_ID = "1472639359311413441";
-
-// Salon de départ
-const LEAVE_CHANNEL_ID = "1472639378202558646";
-
-// GIF Nancy RP
-const NANCY_GIF = "https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/NANCY_RP_4.gif";
-
-// Fonction pour calculer la durée sur le serveur
-function formatDuration(ms) {
-  const totalSeconds = Math.floor(ms / 1000);
-  const days = Math.floor(totalSeconds / 86400);
-  const hours = Math.floor((totalSeconds % 86400) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-  return `${days}j ${hours}h ${minutes}m`;
-}
 
 // ======================================================
 // 🟣 ARRIVÉE D’UN MEMBRE
