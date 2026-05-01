@@ -1333,7 +1333,7 @@ client.on("messageCreate", async (message) => {
       return message.reply("⛔ Tu n’as pas accès au panel staff.");
     }
 
-    sendStaffPanel(interaction.channel);
+    sendStaffPanel(message.channel);
   }
 });
 
@@ -1358,7 +1358,7 @@ client.on("interactionCreate", async (interaction) => {
 // 🟣 FONCTION — ENVOI DU PANEL STAFF
 // ======================================================
 
-function sendStaffPanel(channel) {
+function sendStaffPanel(interaction.channel);
   const embed = new EmbedBuilder()
     .setColor("#8E44AD")
     .setTitle("🟣 Panel Staff — Nancy RP")
