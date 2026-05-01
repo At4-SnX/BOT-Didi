@@ -418,17 +418,19 @@ https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/N
   }
 
   // ======================================================
-  // 🔥 RAID MODE — n.raid (avec confirmation)
-  // ======================================================
-  if (cmd === "raid") {
-    const confirmEmbed = embedError(
-      "Confirmation RAID Mode",
-      "🟣 Es-tu sûr de vouloir **activer le RAID MODE** ?\n\n" +
-        "Cette action va :\n" +
-        "🔮 Verrouiller tous les salons\n" +
-        "🛑 Expulser les bots non whitelist\n" +
-        "💜 Activer la protection maximale"
-    );
+// 🟣 RAID MODE — VERSION PREFIX (n.raid)
+// ======================================================
+
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
+
+  // Commande prefix RAID
+  if (message.content === "n.raid") {
+    const confirmEmbed = new EmbedBuilder()
+      .setColor("#E74C3C")
+      .setTitle("⚠️ Confirmation RAID")
+      .setDescription("Veux‑tu vraiment activer le RAID Mode ?")
+      .setFooter({ text: "🌺 Nancy RP • Security Core" });
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
@@ -446,7 +448,6 @@ https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/N
       components: [row]
     });
 
-    // Collecteur de boutons
     const collector = msg.createMessageComponentCollector({
       time: 30000
     });
@@ -466,55 +467,38 @@ https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/N
 
       if (interaction.customId === "confirm_raid_prefix") {
         collector.stop("confirmed");
-
-        raidState.set(message.guild.id, { active: true });
-        await lockChannels(message.guild);
-        await kickNonWhitelistedBots(message.guild);
-
-        await interaction.update({
-          embeds: [
-            embedRaidAlert(false).setDescription(
-              "🚨 **RAID MODE ACTIVÉ**\n\n" +
-                "🔮 Salons verrouillés\n" +
-                "🛑 Bots non whitelist expulsés\n" +
-                "💜 Protection maximale active"
-            )
-          ],
-          components: []
-        });
       }
 
       if (interaction.customId === "cancel_raid_prefix") {
         collector.stop("cancelled");
-
-        await interaction.update({
-          embeds: [
-            embedInfo(
-              "Raid annulé",
-              "🟣 Le RAID Mode n’a pas été activé."
-            )
-          ],
-          components: []
-        });
       }
     });
 
     collector.on("end", async (collected, reason) => {
-      if (reason === "time") {
+      if (reason === "confirmed") {
         await msg.edit({
           embeds: [
-            embedError(
-              "Confirmation expirée",
-              "🕒 Tu n’as pas confirmé à temps."
-            )
+            new EmbedBuilder()
+              .setColor("#E74C3C")
+              .setTitle("🛡️ RAID Mode activé")
+              .setDescription("Le RAID Mode a été activé via la commande prefix.")
+          ],
+          components: []
+        });
+      } else {
+        await msg.edit({
+          embeds: [
+            new EmbedBuilder()
+              .setColor("#95A5A6")
+              .setTitle("❌ Action annulée")
+              .setDescription("Le RAID Mode n’a pas été activé.")
           ],
           components: []
         });
       }
     });
-
-    return;
   }
+});
 
   // ======================================================
   // 🔓 n.unraid
