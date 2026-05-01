@@ -1176,6 +1176,10 @@ client.on("ready", async () => {
       description: "Désactive le Raid Mode (OWNER uniquement)"
     },
     {
+      name: "staffpanel",
+      description: "Ouvre le panel staff"
+    },
+    {
       name: "raidsim",
       description: "Simulation de Raid (OWNER uniquement)"
     },
@@ -1314,163 +1318,160 @@ client.on("guildMemberRemove", async (member) => {
 // 🟣 BLOC 7 — PANEL STAFF (Slash Only + Éphémère)
 // ======================================================
 
-// CONFIG
 const STAFF_ROLE_ID = "1482533960557789214"; // rôle staff autorisé
 
-// ======================================================
-// 🟣 COMMANDE SLASH — /panel (100% ÉPHÉMÈRE)
-// ======================================================
-
 client.on("interactionCreate", async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
 
-  if (interaction.commandName === "panel") {
+  // ---------- SLASH /staffpanel ----------
+  if (interaction.isChatInputCommand()) {
+    if (interaction.commandName !== "staffpanel") return;
+
     if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
-      return interaction.reply({ content: "⛔ Tu n’as pas accès au panel staff.", ephemeral: true });
+      return interaction.reply({
+        content: "⛔ Tu n’as pas accès au panel staff.",
+        ephemeral: true
+      });
     }
 
-    sendStaffPanel(interaction, true); // panel invisible pour les autres
-  }
-});
+    const embed = new EmbedBuilder()
+      .setColor("#8E44AD")
+      .setTitle("🟣 Panel Staff — Nancy RP")
+      .setDescription(
+        [
+          "Bienvenue dans le **Panel Staff**.",
+          "",
+          "💠 **Sections disponibles :**",
+          "> 🔧 Modération",
+          "> 🎫 Tickets",
+          "> 🛡️ Sécurité",
+          "> 🧰 Outils Staff",
+          "",
+          "Utilise les boutons ci‑dessous pour naviguer."
+        ].join("\n")
+      )
+      .setFooter({ text: "🌺 Nancy RP • Security Core" })
+      .setTimestamp();
 
-// ======================================================
-// 🟣 FONCTION — ENVOI DU PANEL STAFF (ÉPHÉMÈRE)
-// ======================================================
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("panel_moderation")
+        .setLabel("🔧 Modération")
+        .setStyle(ButtonStyle.Primary),
 
-function sendStaffPanel(interaction, ephemeral) {
-  const embed = new EmbedBuilder()
-    .setColor("#8E44AD")
-    .setTitle("🟣 Panel Staff — Nancy RP")
-    .setDescription(
-      [
-        "Bienvenue dans le **Panel Staff**.",
-        "",
-        "💠 **Sections disponibles :**",
-        "> 🔧 Modération",
-        "> 🎫 Tickets",
-        "> 🛡️ Sécurité",
-        "> 🧰 Outils Staff",
-        "",
-        "Utilise les boutons ci‑dessous pour naviguer."
-      ].join("\n")
-    )
-    .setFooter({ text: "🌺 Nancy RP • Security Core" })
-    .setTimestamp();
+      new ButtonBuilder()
+        .setCustomId("panel_tickets")
+        .setLabel("🎫 Tickets")
+        .setStyle(ButtonStyle.Primary),
 
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId("panel_moderation")
-      .setLabel("🔧 Modération")
-      .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId("panel_securite")
+        .setLabel("🛡️ Sécurité")
+        .setStyle(ButtonStyle.Primary),
 
-    new ButtonBuilder()
-      .setCustomId("panel_tickets")
-      .setLabel("🎫 Tickets")
-      .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId("panel_outils")
+        .setLabel("🧰 Outils")
+        .setStyle(ButtonStyle.Primary)
+    );
 
-    new ButtonBuilder()
-      .setCustomId("panel_securite")
-      .setLabel("🛡️ Sécurité")
-      .setStyle(ButtonStyle.Primary),
-
-    new ButtonBuilder()
-      .setCustomId("panel_outils")
-      .setLabel("🧰 Outils")
-      .setStyle(ButtonStyle.Primary)
-  );
-
-  interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
-}
-
-// ======================================================
-// 🟣 PANEL STAFF — SOUS-MENUS (ÉPHÉMÈRES)
-// ======================================================
-
-client.on("interactionCreate", async (interaction) => {
-  if (!interaction.isButton()) return;
-
-  if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
-    return interaction.reply({ content: "⛔ Tu n’as pas accès à cette section.", ephemeral: true });
+    return interaction.reply({
+      embeds: [embed],
+      components: [row],
+      ephemeral: true
+    });
   }
 
-  let embed;
+  // ---------- BOUTONS PANEL ----------
+  if (interaction.isButton()) {
+    if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
+      return interaction.reply({
+        content: "⛔ Tu n’as pas accès à cette section.",
+        ephemeral: true
+      });
+    }
 
-  switch (interaction.customId) {
+    let embed;
 
-    case "panel_moderation":
-      embed = new EmbedBuilder()
-        .setColor("#8E44AD")
-        .setTitle("🔧 Section Modération")
-        .setDescription(
-          [
-            "💠 **Outils disponibles :**",
-            "> • /warn",
-            "> • /unwarn",
-            "> • /warnings",
-            "> • /mute",
-            "> • /unmute",
-            "> • /kick",
-            "> • /ban",
-            "> • /unban"
-          ].join("\n")
-        )
-        .setFooter({ text: "🌺 Nancy RP • Security Core" });
-      break;
+    switch (interaction.customId) {
 
-    case "panel_tickets":
-      embed = new EmbedBuilder()
-        .setColor("#8E44AD")
-        .setTitle("🎫 Section Tickets")
-        .setDescription(
-          [
-            "💠 **Catégories :**",
-            "> • Signalement Staff",
-            "> • Signalement Joueur",
-            "> • Demande d’Unban",
-            "> • Partenariat",
-            "> • Demande spéciale",
-            "> • Demande Fondation"
-          ].join("\n")
-        )
-        .setFooter({ text: "🌺 Nancy RP • Security Core" });
-      break;
+      case "panel_moderation":
+        embed = new EmbedBuilder()
+          .setColor("#8E44AD")
+          .setTitle("🔧 Section Modération")
+          .setDescription(
+            [
+              "💠 **Outils disponibles :**",
+              "> • /warn",
+              "> • /unwarn",
+              "> • /warnings",
+              "> • /mute",
+              "> • /unmute",
+              "> • /kick",
+              "> • /ban",
+              "> • /unban"
+            ].join("\n")
+          )
+          .setFooter({ text: "🌺 Nancy RP • Security Core" });
+        break;
 
-    case "panel_securite":
-      embed = new EmbedBuilder()
-        .setColor("#8E44AD")
-        .setTitle("🛡️ Section Sécurité")
-        .setDescription(
-          [
-            "💠 **Outils :**",
-            "> • n.raid",
-            "> • n.unraid",
-            "> • n.raidsim",
-            "> • n.antibot on/off",
-            "> • Whitelist bots"
-          ].join("\n")
-        )
-        .setFooter({ text: "🌺 Nancy RP • Security Core" });
-      break;
+      case "panel_tickets":
+        embed = new EmbedBuilder()
+          .setColor("#8E44AD")
+          .setTitle("🎫 Section Tickets")
+          .setDescription(
+            [
+              "💠 **Catégories :**",
+              "> • Signalement Staff",
+              "> • Signalement Joueur",
+              "> • Demande d’Unban",
+              "> • Partenariat",
+              "> • Demande spéciale",
+              "> • Demande Fondation"
+            ].join("\n")
+          )
+          .setFooter({ text: "🌺 Nancy RP • Security Core" });
+        break;
 
-    case "panel_outils":
-      embed = new EmbedBuilder()
-        .setColor("#8E44AD")
-        .setTitle("🧰 Section Outils Staff")
-        .setDescription(
-          [
-            "💠 **Outils :**",
-            "> • /save",
-            "> • /load",
-            "> • /giveaway",
-            "> • /help",
-            "> • Panel staff"
-          ].join("\n")
-        )
-        .setFooter({ text: "🌺 Nancy RP • Security Core" });
-      break;
+      case "panel_securite":
+        embed = new EmbedBuilder()
+          .setColor("#8E44AD")
+          .setTitle("🛡️ Section Sécurité")
+          .setDescription(
+            [
+              "💠 **Outils :**",
+              "> • n.raid",
+              "> • n.unraid",
+              "> • n.raidsim",
+              "> • n.antibot on/off",
+              "> • Whitelist bots"
+            ].join("\n")
+          )
+          .setFooter({ text: "🌺 Nancy RP • Security Core" });
+        break;
+
+      case "panel_outils":
+        embed = new EmbedBuilder()
+          .setColor("#8E44AD")
+          .setTitle("🧰 Section Outils Staff")
+          .setDescription(
+            [
+              "💠 **Outils :**",
+              "> • /save",
+              "> • /load",
+              "> • /giveaway",
+              "> • /help",
+              "> • Panel staff"
+            ].join("\n")
+          )
+          .setFooter({ text: "🌺 Nancy RP • Security Core" });
+        break;
+    }
+
+    return interaction.reply({
+      embeds: [embed],
+      ephemeral: true
+    });
   }
-
-  interaction.reply({ embeds: [embed], ephemeral: true });
 });
 
 // ======================================================
