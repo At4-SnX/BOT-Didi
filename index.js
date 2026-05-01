@@ -1246,44 +1246,19 @@ client.on("ready", async () => {
   console.log("🟣 Enregistrement des commandes slash locales...");
 
   const commands = [
-    // ======================================================
-    // 🟣 Commandes générales
-    // ======================================================
-    {
-      name: "help",
-      description: "Affiche l'aide du bot Nancy RP"
-    },
-    {
-      name: "panel",
-      description: "Ouvre le panel staff"
-    },
+    { name: "help", description: "Affiche l'aide du bot Nancy RP" },
+    { name: "panel", description: "Ouvre le panel staff" },
+    { name: "raid", description: "Active le Raid Mode (OWNER uniquement)" },
+    { name: "unraid", description: "Désactive le Raid Mode (OWNER uniquement)" },
+    { name: "raidsim", description: "Simulation de Raid (OWNER uniquement)" },
 
-    // ======================================================
-    // 🛡️ RAID
-    // ======================================================
-    {
-      name: "raid",
-      description: "Active le Raid Mode (OWNER uniquement)"
-    },
-    {
-      name: "unraid",
-      description: "Désactive le Raid Mode (OWNER uniquement)"
-    },
-    {
-      name: "raidsim",
-      description: "Simulation de Raid (OWNER uniquement)"
-    },
-
-    // ======================================================
-    // 🤖 Anti-bot
-    // ======================================================
     {
       name: "antibot",
-      description: "Active ou désactive l'anti-bot (OWNER uniquement)",
+      description: "Active ou désactive l'anti-bot",
       options: [
         {
           name: "mode",
-          description: "on / off",
+          description: "on/off",
           type: 3,
           required: true,
           choices: [
@@ -1294,43 +1269,18 @@ client.on("ready", async () => {
       ]
     },
 
-    // ======================================================
-    // 💾 Sauvegarde / Restauration
-    // ======================================================
-    {
-      name: "save",
-      description: "Sauvegarde la structure du serveur (OWNER uniquement)"
-    },
-    {
-      name: "load",
-      description: "Restaure la dernière sauvegarde (OWNER uniquement)"
-    },
+    { name: "save", description: "Sauvegarde la structure du serveur" },
+    { name: "load", description: "Restaure la structure du serveur" },
 
-    // ======================================================
-    // 🎁 Giveaway
-    // ======================================================
     {
       name: "giveaway",
       description: "Créer un giveaway",
       options: [
-        {
-          name: "durée",
-          description: "Durée en minutes",
-          type: 4,
-          required: true
-        },
-        {
-          name: "récompense",
-          description: "Nom de la récompense",
-          type: 3,
-          required: true
-        }
+        { name: "durée", description: "Durée en minutes", type: 4, required: true },
+        { name: "récompense", description: "Nom de la récompense", type: 3, required: true }
       ]
     },
 
-    // ======================================================
-    // 🔧 Modération
-    // ======================================================
     {
       name: "warn",
       description: "Avertit un membre",
@@ -1339,29 +1289,33 @@ client.on("ready", async () => {
         { name: "raison", description: "Raison du warn", type: 3, required: false }
       ]
     },
+
     {
       name: "unwarn",
-      description: "Retire un avertissement à un membre",
+      description: "Retire un avertissement",
       options: [
         { name: "membre", description: "Le membre à unwarn", type: 6, required: true }
       ]
     },
+
     {
       name: "warnings",
-      description: "Affiche le nombre de warns d'un membre",
+      description: "Affiche les warns d'un membre",
       options: [
         { name: "membre", description: "Le membre à vérifier", type: 6, required: true }
       ]
     },
+
     {
       name: "mute",
-      description: "Mute un membre avec une durée",
+      description: "Mute un membre",
       options: [
         { name: "membre", description: "Le membre à mute", type: 6, required: true },
         { name: "durée", description: "Exemple : 10m, 1h, 2d", type: 3, required: true },
         { name: "raison", description: "Raison du mute", type: 3, required: false }
       ]
     },
+
     {
       name: "kick",
       description: "Kick un membre",
@@ -1370,6 +1324,7 @@ client.on("ready", async () => {
         { name: "raison", description: "Raison du kick", type: 3, required: false }
       ]
     },
+
     {
       name: "ban",
       description: "Ban un membre",
@@ -1383,6 +1338,7 @@ client.on("ready", async () => {
   await guild.commands.set(commands);
   console.log("🟣 Commandes slash LOCALES enregistrées (instantanées).");
 });
+
 
 // ======================================================
 // 🟣 ARRIVÉE D’UN MEMBRE
