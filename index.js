@@ -1160,10 +1160,15 @@ client.on("messageDelete", (message) => {
 client.on("ready", async () => {
   console.log(`🟣 Connecté en tant que ${client.user.tag}`);
 
-  // On attend que Discord initialise correctement l'application
-  await client.application.fetch();
+  // On récupère ton serveur Nancy RP
+  const guild = client.guilds.cache.get("1472637775281918123");
+  if (!guild) {
+    console.log("❌ Impossible de trouver le serveur Nancy RP.");
+    return;
+  }
 
-  await client.application.commands.set([
+  // Commandes locales (instantanées)
+  await guild.commands.set([
     {
       name: "help",
       description: "Affiche l'aide du bot Nancy RP"
@@ -1228,9 +1233,8 @@ client.on("ready", async () => {
     }
   ]);
 
-  console.log("🟣 Commandes slash enregistrées.");
+  console.log("🟣 Commandes slash LOCALES enregistrées (instantanées).");
 });
-
 
 // ======================================================
 // 🟣 BLOC 6 — ARRIVÉES & DÉPARTS (SALONS SÉPARÉS + PING + GIF + DURÉE)
