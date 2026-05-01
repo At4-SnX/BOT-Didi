@@ -390,11 +390,17 @@ ${NANCY_GIF}
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
+  // IGNORER TOUTES LES INTERACTIONS SLASH
+  if (message.interaction) return; 
+  if (!message.content) return;     // ← IMPORTANT
+  if (message.content.startsWith("/")) return;
+
   const prefix = "n.";
   if (!message.content.startsWith(prefix)) return;
 
   const args = message.content.slice(prefix.length).trim().split(/ +/g);
   const cmd = args.shift()?.toLowerCase();
+
 
   // ======================================================
   // 🛡️ Vérification OWNER
