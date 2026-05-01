@@ -403,8 +403,22 @@ https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/N
   }, 2000);
 });
 
+// ======================================================
+// 🟣 COMMANDES PREFIX (UN SEUL EVENT)
+// ======================================================
+
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
+
+  // On récupère la commande prefix
+  const prefix = "n.";
+  if (!message.content.startsWith(prefix)) return;
+
+  const args = message.content.slice(prefix.length).trim().split(/ +/g);
+  const cmd = args.shift()?.toLowerCase();
+
   // ======================================================
-  // 🛡️ COMMANDES OWNER UNIQUEMENT
+  // 🛡️ Vérification OWNER
   // ======================================================
   if (!isOwner(message.author.id)) {
     return message.channel.send({
@@ -418,14 +432,9 @@ https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/N
   }
 
   // ======================================================
-// 🟣 RAID MODE — VERSION PREFIX (n.raid)
-// ======================================================
-
-client.on("messageCreate", async (message) => {
-  if (message.author.bot) return;
-
-  // Commande prefix RAID
-  if (message.content === "n.raid") {
+  // 🟣 RAID MODE — VERSION PREFIX (n.raid)
+  // ======================================================
+  if (cmd === "raid") {
     const confirmEmbed = new EmbedBuilder()
       .setColor("#E74C3C")
       .setTitle("⚠️ Confirmation RAID")
@@ -498,7 +507,6 @@ client.on("messageCreate", async (message) => {
       }
     });
   }
-});
 
   // ======================================================
   // 🔓 n.unraid
@@ -603,6 +611,7 @@ client.on("messageCreate", async (message) => {
     });
   }
 });
+
 
 // ======================================================
 // 🟣 COMMANDES SLASH — VERSION PREMIUM ULTRA VIOLET LUXE
