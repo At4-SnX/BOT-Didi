@@ -1315,8 +1315,7 @@ client.on("guildMemberRemove", async (member) => {
 // ======================================================
 
 // CONFIG
-const STAFF_PANEL_CHANNEL_ID = "ID_DU_SALON_PANEL"; // salon où envoyer le panel
-const STAFF_ROLE_ID = "ID_DU_ROLE_STAFF"; // rôle staff autorisé
+const STAFF_ROLE_ID = "1482533960557789214"; // rôle staff autorisé
 
 // ======================================================
 // 🟣 COMMANDE PREFIX — n.panel
@@ -1334,7 +1333,7 @@ client.on("messageCreate", async (message) => {
       return message.reply("⛔ Tu n’as pas accès au panel staff.");
     }
 
-    sendStaffPanel(message.channel);
+    sendStaffPanel(interaction.channel);
   }
 });
 
