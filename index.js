@@ -1501,6 +1501,150 @@ client.on("interactionCreate", async (interaction) => {
 });
 
 // ======================================================
+// 🟣 /unwarn (corrigé)
+// ======================================================
+if (cmd === "unwarn") {
+  const user = interaction.options.getUser("membre");
+  const member = interaction.guild.members.cache.get(user.id);
+
+  if (!warns[user.id] || warns[user.id] === 0) {
+    return interaction.reply({
+      content: "❌ Ce membre n’a aucun warn.",
+      ephemeral: true
+    });
+  }
+
+  // On retire 1 warn
+  warns[user.id]--;
+  fs.writeFileSync("./warns.json", JSON.stringify(warns, null, 2));
+
+  // On reset tous les rôles de warn
+  const roles = [WARN_ROLE_1, WARN_ROLE_2, WARN_ROLE_3];
+  for (const r of roles) {
+    await member.roles.remove(r).catch(() => {});
+  }
+
+  // On remet le bon rôle selon le nouveau nombre de warns
+  if (warns[user.id] >= 1 && warns[user.id] <= 3) {
+    const roleToGive = roles[warns[user.id] - 1];
+    await member.roles.add(roleToGive).catch(() => {});
+  }
+
+  return interaction.reply({
+    content: `✔️ Warn retiré à ${user}. Warns restants : **${warns[user.id]}**`,
+    ephemeral: true
+  });
+}
+
+// ======================================================
+// 🟣 /mute (corrigé)
+// ======================================================
+if (cmd === "mute") {
+  const member = interaction.options.getMember("membre");
+  const duration = interaction.options.getString("durée");
+  const reason = interaction.options.getString("raison") || "Aucune raison fournie";
+
+  const msDuration = ms(duration);
+  if (!msDuration) {
+    return interaction.reply({
+      content: "⛔ Durée invalide. Exemple : `10m`, `1h`, `2d`",
+      ephemeral: true
+    });
+  }
+
+  try {
+    await member.timeout(msDuration, reason);
+  } catch (err) {
+    return interaction.reply({
+      content: "❌ Impossible de mute ce membre (permissions ou hiérarchie de rôles).",
+      ephemeral: true
+    });
+  }
+
+  return interaction.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setColor("#8E44AD")
+        .setTitle("🔇 Mute appliqué")
+        .setDescription(
+          [
+            `👤 **Membre :** ${member}`,
+            `⏳ **Durée :** ${duration}`,
+            `📝 **Raison :** ${reason}`
+          ].join("\n")
+        )
+        .setFooter({ text: "🌺 Nancy RP • Security Core" })
+    ],
+    ephemeral: true
+  });
+}
+
+// ======================================================
+// 🟣 /ban (corrigé)
+// ======================================================
+if (cmd === "ban") {
+  const user = interaction.options.getUser("membre");
+  const reason = interaction.options.getString("raison") || "Aucune raison fournie";
+
+  try {
+    await interaction.guild.members.ban(user.id, { reason });
+  } catch (err) {
+    return interaction.reply({
+      content: "❌ Impossible de bannir ce membre (permissions ou hiérarchie de rôles).",
+      ephemeral: true
+    });
+  }
+
+  return interaction.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setColor("#8E44AD")
+        .setTitle("🔨 Bannissement effectué")
+        .setDescription(
+          [
+            `👤 **Membre :** ${user.tag}`,
+            `📝 **Raison :** ${reason}`
+          ].join("\n")
+        )
+        .setFooter({ text: "🌺 Nancy RP • Security Core" })
+        .setTimestamp()
+    ],
+    ephemeral: true
+  });
+}
+
+// ======================================================
+// 🟣 /warnings (corrigé)
+// ======================================================
+if (cmd === "warnings") {
+  const user = interaction.options.getUser("membre");
+
+  // Si aucun warn enregistré → 0
+  const count = warns[user.id] || 0;
+
+  return interaction.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setColor("#8E44AD")
+        .setTitle("📊 Historique des warns")
+        .setDescription(
+          [
+            `👤 **Membre :** ${user}`,
+            `🔢 **Nombre de warns :** ${count}`,
+            "",
+            count === 0
+              ? "✔️ Ce membre n’a aucun avertissement."
+              : "📌 Les warns sont enregistrés dans le système."
+          ].join("\n")
+        )
+        .setFooter({ text: "🌺 Nancy RP • Security Core" })
+        .setTimestamp()
+    ],
+    ephemeral: true
+  });
+}
+
+// ======================================================
 // 🔑 LOGIN FINAL
 // ======================================================
 
