@@ -1311,34 +1311,14 @@ client.on("guildMemberRemove", async (member) => {
 });
 
 // ======================================================
-// 🟣 BLOC 7 — PANEL STAFF (Embed Premium + Boutons)
+// 🟣 BLOC 7 — PANEL STAFF (Slash Only + Éphémère)
 // ======================================================
 
 // CONFIG
 const STAFF_ROLE_ID = "1482533960557789214"; // rôle staff autorisé
 
 // ======================================================
-// 🟣 COMMANDE PREFIX — n.panel
-// ======================================================
-
-client.on("messageCreate", async (message) => {
-  if (message.author.bot) return;
-  if (!message.content.startsWith(PREFIX)) return;
-
-  const args = message.content.slice(PREFIX.length).trim().split(/\s+/);
-  const cmd = args.shift()?.toLowerCase();
-
-  if (cmd === "panel") {
-    if (!message.member.roles.cache.has(STAFF_ROLE_ID)) {
-      return message.reply("⛔ Tu n’as pas accès au panel staff.");
-    }
-
-    sendStaffPanel(message.channel);
-  }
-});
-
-// ======================================================
-// 🟣 COMMANDE SLASH — /panel
+// 🟣 COMMANDE SLASH — /panel (100% ÉPHÉMÈRE)
 // ======================================================
 
 client.on("interactionCreate", async (interaction) => {
@@ -1349,16 +1329,15 @@ client.on("interactionCreate", async (interaction) => {
       return interaction.reply({ content: "⛔ Tu n’as pas accès au panel staff.", ephemeral: true });
     }
 
-    sendStaffPanel(interaction.channel);
-    interaction.reply({ content: "🟣 Panel staff envoyé.", ephemeral: true });
+    sendStaffPanel(interaction, true); // panel invisible pour les autres
   }
 });
 
 // ======================================================
-// 🟣 FONCTION — ENVOI DU PANEL STAFF
+// 🟣 FONCTION — ENVOI DU PANEL STAFF (ÉPHÉMÈRE)
 // ======================================================
 
-function sendStaffPanel(channel) {
+function sendStaffPanel(interaction, ephemeral) {
   const embed = new EmbedBuilder()
     .setColor("#8E44AD")
     .setTitle("🟣 Panel Staff — Nancy RP")
@@ -1400,11 +1379,11 @@ function sendStaffPanel(channel) {
       .setStyle(ButtonStyle.Primary)
   );
 
-  channel.send({ embeds: [embed], components: [row] });
+  interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
 }
 
 // ======================================================
-// 🟣 PANEL STAFF — SOUS-MENUS (Embed Premium)
+// 🟣 PANEL STAFF — SOUS-MENUS (ÉPHÉMÈRES)
 // ======================================================
 
 client.on("interactionCreate", async (interaction) => {
