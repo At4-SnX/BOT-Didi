@@ -34,7 +34,7 @@ const client = new Client({
 // 🟣 CONSTANTES GLOBALES
 // ======================================================
 
-const OWNER_ID = "1472637775281918123";
+const OWNER_ID = "1022469165824606258";
 
 // Rôles warns (à adapter si besoin)
 const WARN_ROLE_1 = "1482533960557789214";
