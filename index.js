@@ -1358,7 +1358,7 @@ client.on("interactionCreate", async (interaction) => {
 // 🟣 FONCTION — ENVOI DU PANEL STAFF
 // ======================================================
 
-function sendStaffPanel(interaction.channel);
+function sendStaffPanel(channel) {
   const embed = new EmbedBuilder()
     .setColor("#8E44AD")
     .setTitle("🟣 Panel Staff — Nancy RP")
