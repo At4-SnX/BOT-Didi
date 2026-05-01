@@ -1160,7 +1160,8 @@ client.on("messageDelete", (message) => {
 client.on("ready", async () => {
   console.log(`🟣 Connecté en tant que ${client.user.tag}`);
 
-  if (!client.application?.commands) return;
+  // On attend que Discord initialise correctement l'application
+  await client.application.fetch();
 
   await client.application.commands.set([
     {
@@ -1229,6 +1230,7 @@ client.on("ready", async () => {
 
   console.log("🟣 Commandes slash enregistrées.");
 });
+
 
 // ======================================================
 // 🟣 BLOC 6 — ARRIVÉES & DÉPARTS (SALONS SÉPARÉS + PING + GIF + DURÉE)
