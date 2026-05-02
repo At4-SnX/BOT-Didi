@@ -41,6 +41,10 @@ const WARN_ROLE_1 = "1482533960557789214";
 const WARN_ROLE_2 = "1482533960557789214";
 const WARN_ROLE_3 = "1482533960557789214";
 
+const STAFF_ROLES = "1482533960557789214";
+
+
+
 // Giveaway
 const GIVEAWAY_ROLE_ID = "1482533960557789214";
 const FOUNDATION_ROLE_ID = "1482533960557789214";
@@ -755,6 +759,20 @@ client.on("interactionCreate", async (interaction) => {
     await interaction.reply({ embeds: [embed] });
   }
 
+// 🔒 Protection staff
+if (member.roles.cache.some(r => STAFF_ROLES.includes(r.id))) {
+  return interaction.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setColor(COLOR_ERROR)
+        .setTitle("⛔ Action interdite")
+        .setDescription("Tu ne peux pas bannir un membre du staff.")
+        .setFooter(FOOTER)
+    ],
+    ephemeral: true
+  });
+}
+
   // KICK
   if (cmd === "kick") {
     if (!interaction.member.permissions.has("KickMembers")) {
@@ -776,6 +794,20 @@ client.on("interactionCreate", async (interaction) => {
     if (!member) {
       return interaction.reply({ content: "Membre introuvable.", ephemeral: true });
     }
+
+// 🔒 Protection staff : impossible de sanctionner un staff
+if (member.roles.cache.some(r => STAFF_ROLES.includes(r.id))) {
+  return interaction.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setColor(COLOR_ERROR)
+        .setTitle("⛔ Action interdite")
+        .setDescription("Tu ne peux pas sanctionner un membre du staff.")
+        .setFooter(FOOTER)
+    ],
+    ephemeral: true
+  });
+}
 
     await member.kick(reason).catch(() => {});
 
@@ -820,7 +852,21 @@ client.on("interactionCreate", async (interaction) => {
 
     await interaction.reply({ embeds: [embed] });
   }
-});
+
+// 🔒 Protection staff
+if (member.roles.cache.some(r => STAFF_ROLES.includes(r.id))) {
+  return interaction.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setColor(COLOR_ERROR)
+        .setTitle("⛔ Action interdite")
+        .setDescription("Tu ne peux pas bannir un membre du staff.")
+        .setFooter(FOOTER)
+    ],
+    ephemeral: true
+  });
+}
+
 
 // ======================================================
 // 🟣 BLOC 7 — DÉPARTS (guildMemberRemove)
