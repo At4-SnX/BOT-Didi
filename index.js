@@ -864,9 +864,10 @@ if (member.roles.cache.some(r => STAFF_ROLES.includes(r.id))) {
       .setDescription(`**${member.user.tag}** a été banni.\nRaison : ${reason}`)
       .setFooter(FOOTER);
 
-    await interaction.reply({ embeds: [embed] });
+await interaction.reply({ embeds: [embed] });
   }
 
+});
 
 // ======================================================
 // 🟣 BLOC 7 — DÉPARTS (guildMemberRemove)
