@@ -734,6 +734,20 @@ client.on("interactionCreate", async (interaction) => {
     }
 
     const member = interaction.options.getMember("membre");
+// 🔒 Protection staff
+if (member.roles.cache.some(r => STAFF_ROLES.includes(r.id))) {
+  return interaction.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setColor(COLOR_ERROR)
+        .setTitle("⛔ Action interdite")
+        .setDescription("Tu ne peux pas mute un membre du staff.")
+        .setFooter(FOOTER)
+    ],
+    ephemeral: true
+  });
+}
+
     const durationStr = interaction.options.getString("durée");
     const reason = interaction.options.getString("raison") || "Aucune raison fournie";
 
@@ -759,20 +773,6 @@ client.on("interactionCreate", async (interaction) => {
     await interaction.reply({ embeds: [embed] });
   }
 
-// 🔒 Protection staff
-if (member.roles.cache.some(r => STAFF_ROLES.includes(r.id))) {
-  return interaction.reply({
-    embeds: [
-      new EmbedBuilder()
-        .setColor(COLOR_ERROR)
-        .setTitle("⛔ Action interdite")
-        .setDescription("Tu ne peux pas bannir un membre du staff.")
-        .setFooter(FOOTER)
-    ],
-    ephemeral: true
-  });
-}
-
   // KICK
   if (cmd === "kick") {
     if (!interaction.member.permissions.has("KickMembers")) {
@@ -789,13 +789,7 @@ if (member.roles.cache.some(r => STAFF_ROLES.includes(r.id))) {
     }
 
     const member = interaction.options.getMember("membre");
-    const reason = interaction.options.getString("raison") || "Aucune raison fournie";
-
-    if (!member) {
-      return interaction.reply({ content: "Membre introuvable.", ephemeral: true });
-    }
-
-// 🔒 Protection staff : impossible de sanctionner un staff
+// 🔒 Protection staff
 if (member.roles.cache.some(r => STAFF_ROLES.includes(r.id))) {
   return interaction.reply({
     embeds: [
@@ -808,6 +802,12 @@ if (member.roles.cache.some(r => STAFF_ROLES.includes(r.id))) {
     ephemeral: true
   });
 }
+
+    const reason = interaction.options.getString("raison") || "Aucune raison fournie";
+
+    if (!member) {
+      return interaction.reply({ content: "Membre introuvable.", ephemeral: true });
+    }
 
     await member.kick(reason).catch(() => {});
 
@@ -836,6 +836,20 @@ if (member.roles.cache.some(r => STAFF_ROLES.includes(r.id))) {
     }
 
     const member = interaction.options.getMember("membre");
+// 🔒 Protection staff
+if (member.roles.cache.some(r => STAFF_ROLES.includes(r.id))) {
+  return interaction.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setColor(COLOR_ERROR)
+        .setTitle("⛔ Action interdite")
+        .setDescription("Tu ne peux pas bannir un membre du staff.")
+        .setFooter(FOOTER)
+    ],
+    ephemeral: true
+  });
+}
+
     const reason = interaction.options.getString("raison") || "Aucune raison fournie";
 
     if (!member) {
@@ -852,20 +866,6 @@ if (member.roles.cache.some(r => STAFF_ROLES.includes(r.id))) {
 
     await interaction.reply({ embeds: [embed] });
   }
-
-// 🔒 Protection staff
-if (member.roles.cache.some(r => STAFF_ROLES.includes(r.id))) {
-  return interaction.reply({
-    embeds: [
-      new EmbedBuilder()
-        .setColor(COLOR_ERROR)
-        .setTitle("⛔ Action interdite")
-        .setDescription("Tu ne peux pas bannir un membre du staff.")
-        .setFooter(FOOTER)
-    ],
-    ephemeral: true
-  });
-}
 
 
 // ======================================================
