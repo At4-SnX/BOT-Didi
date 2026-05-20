@@ -942,12 +942,11 @@ client.on("guildMemberAdd", async (member) => {
   const channel = member.guild.channels.cache.get(JOIN_CHANNEL_ID);
   if (!channel) return;
 
-  // Canvas
   const canvas = Canvas.createCanvas(900, 300);
   const ctx = canvas.getContext("2d");
 
-  // Fond
-  const background = await Canvas.loadImage("https://i.imgur.com/8b0YwzT.png"); // fond propre
+  // Fond stylé
+  const background = await Canvas.loadImage("https://i.imgur.com/2yaf2kS.jpeg");
   ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
   // Avatar
@@ -960,12 +959,12 @@ client.on("guildMemberAdd", async (member) => {
   ctx.drawImage(avatar, 50, 50, 200, 200);
   ctx.restore();
 
-  // Texte
+  // Texte stylé
   ctx.fillStyle = "#ffffff";
-  ctx.font = "40px Sans";
+  ctx.font = "40px Poppins";
   ctx.fillText("Bienvenue sur Nancy RP", 300, 140);
 
-  ctx.font = "30px Sans";
+  ctx.font = "30px Poppins";
   ctx.fillText(`${member.user.username}`, 300, 200);
 
   const attachment = { files: [{ attachment: canvas.toBuffer(), name: "welcome.png" }] };
@@ -985,6 +984,7 @@ client.on("guildMemberAdd", async (member) => {
 });
 
 
+
 // ======================================================
 // 🟦 LEAVE — Canvas personnalisé
 // ======================================================
@@ -996,10 +996,14 @@ client.on("guildMemberRemove", async (member) => {
   const canvas = Canvas.createCanvas(900, 300);
   const ctx = canvas.getContext("2d");
 
-  const background = await Canvas.loadImage("https://i.imgur.com/8b0YwzT.png");
+  // Fond stylé (celui-ci fonctionne)
+  const background = await Canvas.loadImage("https://i.imgur.com/2yaf2kS.jpeg");
   ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
-  const avatar = await Canvas.loadImage(member.user.displayAvatarURL({ extension: "png" }));
+  // Avatar
+  const avatar = await Canvas.loadImage(
+    member.user.displayAvatarURL({ extension: "png" })
+  );
   ctx.save();
   ctx.beginPath();
   ctx.arc(150, 150, 100, 0, Math.PI * 2);
@@ -1008,14 +1012,17 @@ client.on("guildMemberRemove", async (member) => {
   ctx.drawImage(avatar, 50, 50, 200, 200);
   ctx.restore();
 
+  // Texte stylé
   ctx.fillStyle = "#ffffff";
-  ctx.font = "40px Sans";
+  ctx.font = "40px Poppins";
   ctx.fillText("Un membre nous quitte…", 300, 140);
 
-  ctx.font = "30px Sans";
+  ctx.font = "30px Poppins";
   ctx.fillText(`${member.user.username}`, 300, 200);
 
-  const attachment = { files: [{ attachment: canvas.toBuffer(), name: "leave.png" }] };
+  const attachment = {
+    files: [{ attachment: canvas.toBuffer(), name: "leave.png" }],
+  };
 
   const embed = new EmbedBuilder()
     .setColor(COLOR_ERROR)
