@@ -892,42 +892,19 @@ client.on("interactionCreate", async (interaction) => {
 // 🟦 BLOC 7 — ENREGISTREMENT AUTOMATIQUE DES COMMANDES SLASH (REST)
 // ======================================================
 
-const { REST, Routes } = require("discord.js");
-
-const GUILD_ID = "1472637775281918123"; // Serveur Nancy RP
-const CLIENT_ID = client.user?.id;      // ID du bot
-
 client.on("ready", async () => {
   console.log(`🟦 Connecté en tant que ${client.user.tag}`);
   console.log("🟦 Synchronisation des commandes slash…");
 
-  // Liste complète des commandes slash
+  const CLIENT_ID = client.user.id;
+  const GUILD_ID = "1472637775281918123"; // Nancy RP
+
   const commands = [
-    // Commandes générales
-    {
-      name: "help",
-      description: "Affiche l'aide du bot Nancy RP"
-    },
-    {
-      name: "panel",
-      description: "Ouvre le panel staff"
-    },
-
-    // RAID
-    {
-      name: "raid",
-      description: "Active le Raid Mode (Staff Raid uniquement)"
-    },
-    {
-      name: "unraid",
-      description: "Désactive le Raid Mode (Staff Raid uniquement)"
-    },
-    {
-      name: "raidsim",
-      description: "Simule une alerte RAID (Staff Raid uniquement)"
-    },
-
-    // Anti-bot
+    { name: "help", description: "Affiche l'aide du bot Nancy RP" },
+    { name: "panel", description: "Ouvre le panel staff" },
+    { name: "raid", description: "Active le Raid Mode" },
+    { name: "unraid", description: "Désactive le Raid Mode" },
+    { name: "raidsim", description: "Simule une alerte RAID" },
     {
       name: "antibot",
       description: "Active ou désactive l'anti-bot",
@@ -943,290 +920,117 @@ client.on("ready", async () => {
           ]
         }
       ]
-    },
-
-    // Sauvegarde / Restauration
-    {
-      name: "save",
-      description: "Sauvegarde la structure du serveur"
-    },
-    {
-      name: "load",
-      description: "Restaure la dernière sauvegarde"
-    },
-
-    // Giveaway
-    {
-      name: "giveaway",
-      description: "Créer un giveaway",
-      options: [
-        {
-          name: "durée",
-          description: "Durée en minutes",
-          type: 4,
-          required: true
-        },
-        {
-          name: "récompense",
-          description: "Nom de la récompense",
-          type: 3,
-          required: true
-        },
-        {
-          name: "image",
-          description: "URL d'une image (optionnel)",
-          type: 3,
-          required: false
-        }
-      ]
-    },
-
-    // Modération
-    {
-      name: "warn",
-      description: "Avertit un membre",
-      options: [
-        {
-          name: "membre",
-          description: "Le membre à avertir",
-          type: 6,
-          required: true
-        },
-        {
-          name: "raison",
-          description: "Raison du warn",
-          type: 3,
-          required: false
-        }
-      ]
-    },
-    {
-      name: "unwarn",
-      description: "Retire un avertissement à un membre",
-      options: [
-        {
-          name: "membre",
-          description: "Le membre à unwarn",
-          type: 6,
-          required: true
-        }
-      ]
-    },
-    {
-      name: "warnings",
-      description: "Affiche le nombre de warns d'un membre",
-      options: [
-        {
-          name: "membre",
-          description: "Le membre à vérifier",
-          type: 6,
-          required: true
-        }
-      ]
-    },
-    {
-      name: "mute",
-      description: "Mute un membre avec une durée",
-      options: [
-        {
-          name: "membre",
-          description: "Le membre à mute",
-          type: 6,
-          required: true
-        },
-        {
-          name: "durée",
-          description: "Exemple : 10m, 1h, 2d",
-          type: 3,
-          required: true
-        },
-        {
-          name: "raison",
-          description: "Raison du mute",
-          type: 3,
-          required: false
-        }
-      ]
-    },
-    {
-      name: "kick",
-      description: "Kick un membre",
-      options: [
-        {
-          name: "membre",
-          description: "Le membre à kick",
-          type: 6,
-          required: true
-        },
-        {
-          name: "raison",
-          description: "Raison du kick",
-          type: 3,
-          required: false
-        }
-      ]
-    },
-    {
-      name: "ban",
-      description: "Ban un membre",
-      options: [
-        {
-          name: "membre",
-          description: "Le membre à bannir",
-          type: 6,
-          required: true
-        },
-        {
-          name: "raison",
-          description: "Raison du ban",
-          type: 3,
-          required: false
-        }
-      ]
     }
   ];
 
-  // REST Discord
   const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
-  try {
-    await rest.put(
-      Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
-      { body: commands }
-    );
+  await rest.put(
+    Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
+    { body: commands }
+  );
 
-    console.log("🟦 Commandes slash synchronisées avec succès !");
-  } catch (error) {
-    console.error("❌ Erreur lors de la synchronisation des commandes :", error);
-  }
+  console.log("🟦 Commandes slash synchronisées !");
 });
 
+
 // ======================================================
-// 🟦 JOIN — IMAGE PERSONNALISÉE (CANVAS)
+// 🟦 JOIN — Canvas personnalisé
 // ======================================================
 
 client.on("guildMemberAdd", async (member) => {
   const channel = member.guild.channels.cache.get(JOIN_CHANNEL_ID);
   if (!channel) return;
 
-  // Charger le fond
-  const background = await Canvas.loadImage("./assets/nancy_background.png");
-
   // Canvas
-  const canvas = Canvas.createCanvas(1200, 400);
+  const canvas = Canvas.createCanvas(900, 300);
   const ctx = canvas.getContext("2d");
 
-  // Dessiner le fond
+  // Fond
+  const background = await Canvas.loadImage("https://i.imgur.com/8b0YwzT.png"); // fond propre
   ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
   // Avatar
-  const avatar = await Canvas.loadImage(member.user.displayAvatarURL({ extension: "png", size: 256 }));
-
-  // Cercle avatar
+  const avatar = await Canvas.loadImage(member.user.displayAvatarURL({ extension: "png" }));
   ctx.save();
   ctx.beginPath();
-  ctx.arc(200, 200, 120, 0, Math.PI * 2, true);
+  ctx.arc(150, 150, 100, 0, Math.PI * 2);
   ctx.closePath();
   ctx.clip();
-  ctx.drawImage(avatar, 80, 80, 240, 240);
+  ctx.drawImage(avatar, 50, 50, 200, 200);
   ctx.restore();
 
   // Texte
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = "50px Sans-serif";
-  ctx.fillText("Bienvenue sur Nancy RP !", 380, 170);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "40px Sans";
+  ctx.fillText("Bienvenue sur Nancy RP", 300, 140);
 
-  ctx.font = "35px Sans-serif";
-  ctx.fillText("Ravi de t’accueillir parmi nous.", 380, 240);
+  ctx.font = "30px Sans";
+  ctx.fillText(`${member.user.username}`, 300, 200);
 
-  // Export
   const attachment = { files: [{ attachment: canvas.toBuffer(), name: "welcome.png" }] };
 
-  // Embed d'informations
-  const embed = baseEmbed(COLOR_MAIN)
-    .setTitle("💙 Nouveau membre sur Nancy RP")
+  const embed = new EmbedBuilder()
+    .setColor(COLOR_SUCCESS)
+    .setTitle("🌺 Nouveau membre")
     .setDescription(
-      `👤 **${member.user.username}**\n\n` +
-      `📌 Tu es le **${member.guild.memberCount}ᵉ membre**\n` +
-      `📅 **Compte créé le :** <t:${Math.floor(member.user.createdTimestamp / 1000)}:D>\n` +
-      `🕒 **Arrivé le :** <t:${Math.floor(Date.now() / 1000)}:F>\n\n` +
-      `🎮 **Bon jeu à toi !**`
+      `Bienvenue à **${member.user.username}** sur Nancy RP !\n` +
+      `Nous sommes maintenant **${member.guild.memberCount}** membres.`
     )
-    .setThumbnail(member.user.displayAvatarURL({ dynamic: true }));
+    .setImage("attachment://welcome.png")
+    .setFooter(FOOTER)
+    .setTimestamp();
 
-  // Envoi
-  channel.send({ content: `<@${member.id}>`, embeds: [embed], files: attachment.files });
-
-  // LOG
-  const logEmbed = baseEmbed(COLOR_INFO)
-    .setTitle("📘 Log — Join")
-    .setDescription(`Le membre **${member.user.tag}** vient de rejoindre le serveur.`);
-
-  sendLog(member.guild, logEmbed);
+  channel.send({ embeds: [embed], files: attachment.files });
 });
 
+
 // ======================================================
-// 🟦 LEAVE — IMAGE PERSONNALISÉE (CANVAS)
+// 🟦 LEAVE — Canvas personnalisé
 // ======================================================
 
 client.on("guildMemberRemove", async (member) => {
   const channel = member.guild.channels.cache.get(LEAVE_CHANNEL_ID);
   if (!channel) return;
 
-  // Charger le fond (même image que JOIN)
-  const background = await Canvas.loadImage("./assets/nancy_background.png");
-
-  // Canvas
-  const canvas = Canvas.createCanvas(1200, 400);
+  const canvas = Canvas.createCanvas(900, 300);
   const ctx = canvas.getContext("2d");
 
-  // Dessiner le fond
+  const background = await Canvas.loadImage("https://i.imgur.com/8b0YwzT.png");
   ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
-  // Avatar
-  const avatar = await Canvas.loadImage(member.user.displayAvatarURL({ extension: "png", size: 256 }));
-
-  // Cercle avatar
+  const avatar = await Canvas.loadImage(member.user.displayAvatarURL({ extension: "png" }));
   ctx.save();
   ctx.beginPath();
-  ctx.arc(200, 200, 120, 0, Math.PI * 2, true);
+  ctx.arc(150, 150, 100, 0, Math.PI * 2);
   ctx.closePath();
   ctx.clip();
-  ctx.drawImage(avatar, 80, 80, 240, 240);
+  ctx.drawImage(avatar, 50, 50, 200, 200);
   ctx.restore();
 
-  // Texte
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = "50px Sans-serif";
-  ctx.fillText("À bientôt sur Nancy RP !", 380, 170);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "40px Sans";
+  ctx.fillText("Un membre nous quitte…", 300, 140);
 
-  ctx.font = "35px Sans-serif";
-  ctx.fillText("Merci d’avoir été parmi nous.", 380, 240);
+  ctx.font = "30px Sans";
+  ctx.fillText(`${member.user.username}`, 300, 200);
 
-  // Export
-  const attachment = { files: [{ attachment: canvas.toBuffer(), name: "goodbye.png" }] };
+  const attachment = { files: [{ attachment: canvas.toBuffer(), name: "leave.png" }] };
 
-  // Embed d'informations
-  const embed = baseEmbed(COLOR_ERROR)
-    .setTitle("❤️ Départ d’un membre")
+  const embed = new EmbedBuilder()
+    .setColor(COLOR_ERROR)
+    .setTitle("💨 Départ d’un membre")
     .setDescription(
-      `👤 **${member.user.username}** a quitté Nancy RP.\n\n` +
-      `📅 **Compte créé le :** <t:${Math.floor(member.user.createdTimestamp / 1000)}:D>\n` +
-      `🕒 **Départ :** <t:${Math.floor(Date.now() / 1000)}:F>\n\n` +
-      `🌺 Nous lui souhaitons une bonne continuation.`
+      `**${member.user.username}** a quitté Nancy RP.\n` +
+      `Nous sommes maintenant **${member.guild.memberCount}** membres.`
     )
-    .setThumbnail(member.user.displayAvatarURL({ dynamic: true }));
+    .setImage("attachment://leave.png")
+    .setFooter(FOOTER)
+    .setTimestamp();
 
-  // Envoi
   channel.send({ embeds: [embed], files: attachment.files });
-
-  // LOG
-  const logEmbed = baseEmbed(COLOR_ERROR)
-    .setTitle("📘 Log — Leave")
-    .setDescription(`Le membre **${member.user.tag}** a quitté le serveur.`);
-
-  sendLog(member.guild, logEmbed);
 });
+
 
 // ======================================================
 // 🟦 BLOC 10 — LOGIN FINAL + OPTIMISATIONS
