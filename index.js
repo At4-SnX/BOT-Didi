@@ -989,21 +989,27 @@ client.on("guildMemberAdd", async (member) => {
 // 🟦 LEAVE — Canvas personnalisé
 // ======================================================
 
+// ======================================================
+// 🟥 LEAVE — Canvas avec asset local (Railway-proof)
+// ======================================================
+
 client.on("guildMemberRemove", async (member) => {
   const channel = member.guild.channels.cache.get(LEAVE_CHANNEL_ID);
   if (!channel) return;
 
+  // Canvas
   const canvas = Canvas.createCanvas(900, 300);
   const ctx = canvas.getContext("2d");
 
-  // Fond stylé (celui-ci fonctionne)
-  const background = await Canvas.loadImage("https://i.imgur.com/2yaf2kS.jpeg");
+  // Fond local (Railway-proof)
+  const background = await Canvas.loadImage(__dirname + "/asset/background.png");
   ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
   // Avatar
   const avatar = await Canvas.loadImage(
     member.user.displayAvatarURL({ extension: "png" })
   );
+
   ctx.save();
   ctx.beginPath();
   ctx.arc(150, 150, 100, 0, Math.PI * 2);
@@ -1018,12 +1024,14 @@ client.on("guildMemberRemove", async (member) => {
   ctx.fillText("Un membre nous quitte…", 300, 140);
 
   ctx.font = "30px Poppins";
-  ctx.fillText(`${member.user.username}`, 300, 200);
+  ctx.fillText(member.user.username, 300, 200);
 
+  // Image finale
   const attachment = {
     files: [{ attachment: canvas.toBuffer(), name: "leave.png" }],
   };
 
+  // Embed
   const embed = new EmbedBuilder()
     .setColor(COLOR_ERROR)
     .setTitle("💨 Départ d’un membre")
@@ -1037,7 +1045,6 @@ client.on("guildMemberRemove", async (member) => {
 
   channel.send({ embeds: [embed], files: attachment.files });
 });
-
 
 // ======================================================
 // 🟦 BLOC 10 — LOGIN FINAL + OPTIMISATIONS
