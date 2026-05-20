@@ -1,2 +1,0 @@
-"# Nancy-BOT" 
-"# BOT-Didi" 
