@@ -1,15 +1,13 @@
 {
-  "name": "nancy-rp-bot",
+  "name": "nancy-assistance",
   "version": "1.0.0",
-  "description": "Bot Discord Nancy RP",
-  "main": "index.js",
+  "description": "Bot Discord Professionnel - Nancy ASSISTANCE",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node src/index.js"
   },
   "dependencies": {
-    "canvas": "^2.11.2",
     "discord.js": "^14.14.1",
-    "dotenv": "^16.4.5",
     "ms": "^2.1.3"
   }
 }
