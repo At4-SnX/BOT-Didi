@@ -97,110 +97,51 @@ client.login(config.token);
 // On s'assure d'importer Canvas tout en haut ou juste ici
 const Canvas = require('canvas');
 
-// ==================== SYSTÈME DE BIENVENUE CANVAS ====================
+// ==================== SYSTÈME DE BIENVENUE & DÉPART (STABLE) ====================
 client.on("guildMemberAdd", async (member) => {
     const channelId = "1505943699748814878"; // Ton salon d'arrivée
     const channel = member.guild.channels.cache.get(channelId);
     if (!channel) return;
 
-    try {
-        const canvas = Canvas.createCanvas(900, 300);
-        const ctx = canvas.getContext("2d");
+    // On encode le pseudo pour éviter les bugs avec les espaces ou caractères spéciaux
+    const encodedName = encodeURIComponent(member.user.username);
+    const avatarUrl = encodeURIComponent(member.user.displayAvatarURL({ extension: "png", size: 256 }));
+    const backgroundUrl = encodeURIComponent("https://i.imgur.com/yo7PUTc.png");
 
-        // Chargement du fond depuis ton lien Imgur direct
-        const background = await Canvas.loadImage("https://i.imgur.com/yo7PUTc.png");
-        ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+    // Génération automatique d'une magnifique image via API avec tes paramètres
+    const welcomeCardUrl = `https://api.popcat.xyz/welcomecard?background=${backgroundUrl}&avatar=${avatarUrl}&text1=${encodedName}&text2=Bienvenue+sur+Nancy+RP&text3=Membres:+${member.guild.memberCount}`;
 
-        // Chargement et découpe de l'avatar en cercle
-        const avatar = await Canvas.loadImage(
-            member.user.displayAvatarURL({ extension: "png", size: 256 })
-        );
+    const embed = new EmbedBuilder()
+        .setColor("#5865F2")
+        .setTitle("🌺 Nouveau membre")
+        .setDescription(`Bienvenue à **${member}** sur Nancy RP !\nNous sommes maintenant **${member.guild.memberCount}** citoyens. ✨`)
+        .setImage(welcomeCardUrl) // L'image générée s'affiche directement ici
+        .setFooter({ text: "Nancy ASSISTANCE" })
+        .setTimestamp();
 
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(150, 150, 100, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        ctx.drawImage(avatar, 50, 50, 200, 200);
-        ctx.restore();
-
-        // Ajout des textes
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "40px sans-serif"; // "sans-serif" évite les bugs si Poppins n'est pas installée sur Railway
-        ctx.fillText("Bienvenue sur Nancy RP", 300, 140);
-
-        ctx.font = "30px sans-serif";
-        ctx.fillText(member.user.username, 300, 200);
-
-        const attachment = canvas.toBuffer();
-
-        const embed = new EmbedBuilder()
-            .setColor("#5865F2")
-            .setTitle("🌺 Nouveau membre")
-            .setDescription(`Bienvenue à **${member}** sur Nancy RP !\nNous sommes maintenant **${member.guild.memberCount}** citoyens. ✨`)
-            .setImage("attachment://welcome.png")
-            .setFooter({ text: "Nancy ASSISTANCE" })
-            .setTimestamp();
-
-        await channel.send({ 
-            embeds: [embed], 
-            files: [{ attachment: attachment, name: "welcome.png" }] 
-        });
-
-    } catch (error) {
-        console.error("Erreur Canvas Arrivée :", error);
-    }
+    await channel.send({ embeds: [embed] }).catch(console.error);
 });
 
-// ==================== SYSTÈME DE DÉPART CANVAS ====================
 client.on("guildMemberRemove", async (member) => {
     const channelId = "1505943699748814878"; // Ton salon de départ
     const channel = member.guild.channels.cache.get(channelId);
     if (!channel) return;
 
-    try {
-        const canvas = Canvas.createCanvas(900, 300);
-        const ctx = canvas.getContext("2d");
+    const encodedName = encodeURIComponent(member.user.username);
+    const avatarUrl = encodeURIComponent(member.user.displayAvatarURL({ extension: "png", size: 256 }));
+    const backgroundUrl = encodeURIComponent("https://i.imgur.com/yo7PUTc.png");
 
-        // Même fond Imgur
-        const background = await Canvas.loadImage("https://i.imgur.com/yo7PUTc.png");
-        ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+    // Génération de la carte de départ
+    const leaveCardUrl = `https://api.popcat.xyz/welcomecard?background=${backgroundUrl}&avatar=${avatarUrl}&text1=${encodedName}&text2=A+quitte+le+serveur&text3=Il+reste+${member.guild.memberCount}+citoyens`;
 
-        const avatar = await Canvas.loadImage(
-            member.user.displayAvatarURL({ extension: "png", size: 256 })
-        );
+    const embed = new EmbedBuilder()
+        .setColor("#FF3333")
+        .setTitle("💨 Départ d’un membre")
+        .setDescription(`**${member.user.username}** a quitté Nancy RP.\nIl reste **${member.guild.memberCount}** citoyens en ville. 🗃️`)
+        .setImage(leaveCardUrl)
+        .setFooter({ text: "Nancy ASSISTANCE" })
+        .setTimestamp();
 
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(150, 150, 100, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        ctx.drawImage(avatar, 50, 50, 200, 200);
-        ctx.restore();
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "40px sans-serif";
-        ctx.fillText("Un membre nous quitte…", 300, 140);
-
-        ctx.font = "30px sans-serif";
-        ctx.fillText(member.user.username, 300, 200);
-
-        const attachment = canvas.toBuffer();
-
-        const embed = new EmbedBuilder()
-            .setColor("#FF3333")
-            .setTitle("💨 Départ d’un membre")
-            .setDescription(`**${member.user.username}** a quitté Nancy RP.\nIl reste **${member.guild.memberCount}** citoyens en ville. 🗃️`)
-            .setImage("attachment://leave.png")
-            .setFooter({ text: "Nancy ASSISTANCE" })
-            .setTimestamp();
-
-        await channel.send({ 
-            embeds: [embed], 
-            files: [{ attachment: attachment, name: "leave.png" }] 
-        });
-
-    } catch (error) {
-        console.error("Erreur Canvas Départ :", error);
-    }
+    await channel.send({ embeds: [embed] }).catch(console.error);
 });
+// =================================================================================
