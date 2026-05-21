@@ -1,3 +1,15 @@
+
+async execute(interaction, client) {
+    // TON ID DISCORD UNIQUE (Remplace les chiffres par ton vrai ID)
+    const monIdUnique = "1022469165824606258"; 
+
+    if (interaction.user.id !== monIdUnique) {
+        return interaction.reply({ 
+            content: "❌ **Sécurité Nancy :** Cette commande ultra-sensible est réservée exclusivement au Fondateur du serveur.", 
+            ephemeral: true 
+        });
+    }
+
 const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
