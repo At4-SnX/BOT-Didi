@@ -1,4 +1,3 @@
-const NANCY_GIF = "https://cdn.discordapp.com/attachments/1505943852291330098/1506822827897131141/NANCY_RP_4.gif?ex=6a0fa99d&is=6a0e581d&hm=fbef1a73683367e89bef152972e7ec7839b9bc84df288c7b24276ef64ad6a7a6&";
 require("dotenv").config();
 
 // ======================================================
@@ -76,7 +75,7 @@ const FOOTER = { text: "🌺 Nancy RP • Security Core by SnX" };
 // 🔹 Join / Leave (ADAPTÉ à tes nouveaux salons)
 const JOIN_CHANNEL_ID  = "1505943697496346725";
 const LEAVE_CHANNEL_ID = "1505943698582798427";
-const NANCY_GIF = "https://cdn.discordapp.com/attachments/1472650661685624852/1495404641515606126/NANCY_RP_4.gif";
+const NANCY_GIF = "https://cdn.discordapp.com/attachments/1505943852291330098/1506822827897131141/NANCY_RP_4.gif?ex=6a0fa99d&is=6a0e581d&hm=fbef1a73683367e89bef152972e7ec7839b9bc84df288c7b24276ef64ad6a7a6&";
 
 // 🔹 Tickets catégories (si tu gardes ce système)
 const categories = {
