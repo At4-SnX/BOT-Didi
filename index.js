@@ -1,4 +1,4 @@
-const Canvas = require("canvas");
+const NANCY_GIF = "https://cdn.discordapp.com/attachments/1505943852291330098/1506822827897131141/NANCY_RP_4.gif?ex=6a0fa99d&is=6a0e581d&hm=fbef1a73683367e89bef152972e7ec7839b9bc84df288c7b24276ef64ad6a7a6&";
 require("dotenv").config();
 
 // ======================================================
@@ -699,6 +699,113 @@ client.on("interactionCreate", async (interaction) => {
     sendLog(guild, embed);
   };
 
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+
+  const cmd = interaction.commandName;
+  const guild = interaction.guild;
+  const member = interaction.member;
+
+  // /help
+  if (cmd === "help") {
+    const embed = baseEmbed(COLOR_MAIN)
+      .setTitle("📘 Aide — Nancy RP")
+      .setDescription(
+        "Commandes disponibles :\n" +
+        "`/help`, `/panel`, `/raid`, `/unraid`, `/raidsim`, `/antibot`"
+      );
+
+    return interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+
+  // /panel
+  if (cmd === "panel") {
+    if (!isMod(member)) {
+      return interaction.reply({ content: "⛔ Tu n'as pas accès au panel staff.", ephemeral: true });
+    }
+
+    const embed = baseEmbed(COLOR_MAIN)
+      .setTitle("🛠️ Panel Staff — Nancy RP")
+      .setDescription("Gestion sécurité & modération du serveur.");
+
+    return interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+
+  // /raid
+  if (cmd === "raid") {
+    if (!isRaidManager(member)) {
+      return interaction.reply({ content: "⛔ Permission refusée.", ephemeral: true });
+    }
+
+    raidState.set(guild.id, true);
+    await lockChannels(guild);
+    await kickNonWhitelistedBots(guild);
+
+    return interaction.reply({
+      embeds: [
+        baseEmbed(COLOR_ERROR)
+          .setTitle("🚨 RAID MODE ACTIVÉ")
+          .setDescription("Salons verrouillés, bots non whitelist expulsés.")
+      ]
+    });
+  }
+
+  // /unraid
+  if (cmd === "unraid") {
+    if (!isRaidManager(member)) {
+      return interaction.reply({ content: "⛔ Permission refusée.", ephemeral: true });
+    }
+
+    raidState.set(guild.id, false);
+    await unlockChannels(guild);
+
+    return interaction.reply({
+      embeds: [
+        baseEmbed(COLOR_SUCCESS)
+          .setTitle("🟦 RAID MODE DÉSACTIVÉ")
+          .setDescription("Le serveur est de nouveau accessible.")
+      ]
+    });
+  }
+
+  // /raidsim
+  if (cmd === "raidsim") {
+    if (!isRaidManager(member)) {
+      return interaction.reply({ content: "⛔ Permission refusée.", ephemeral: true });
+    }
+
+    return interaction.reply({
+      embeds: [
+        baseEmbed(COLOR_ERROR)
+          .setTitle("🚨 SIMULATION RAID")
+          .setDescription("Ceci est une simulation, aucune action réelle n’a été effectuée.")
+          .setImage(NANCY_GIF)
+      ],
+      ephemeral: true
+    });
+  }
+
+  // /antibot
+  if (cmd === "antibot") {
+    if (!isAntiBotManager(member)) {
+      return interaction.reply({ content: "⛔ Permission refusée.", ephemeral: true });
+    }
+
+    const mode = interaction.options.getString("mode");
+    antiBotState.set(guild.id, mode === "on");
+
+    return interaction.reply({
+      embeds: [
+        baseEmbed(mode === "on" ? COLOR_SUCCESS : COLOR_ERROR)
+          .setTitle("🤖 Anti-bot")
+          .setDescription(`Anti-bot **${mode === "on" ? "activé" : "désactivé"}**.`)
+      ]
+    });
+  }
+
+  // … ici tu laisses le reste de tes commandes (warn, mute, etc.)
+});
+
   // ======================================================
   // ⚠️ WARN
   // ======================================================
@@ -938,94 +1045,30 @@ client.on("ready", async () => {
 // 🟦 JOIN — Canvas personnalisé
 // ======================================================
 
-Canvas.registerFont(__dirname + "/asset/Poppins-Bold.ttf", { family: "Poppins" });
-
+// ARRIVÉE
 client.on("guildMemberAdd", async (member) => {
   const channel = member.guild.channels.cache.get(JOIN_CHANNEL_ID);
   if (!channel) return;
 
-  const canvas = Canvas.createCanvas(900, 300);
-  const ctx = canvas.getContext("2d");
-
-  // FOND LOCAL Railway-proof
-  const background = await Canvas.loadImage(__dirname + "/asset/background.png");
-  ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
-
-  const avatar = await Canvas.loadImage(
-    member.user.displayAvatarURL({ extension: "png" })
-  );
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(150, 150, 100, 0, Math.PI * 2);
-  ctx.closePath();
-  ctx.clip();
-  ctx.drawImage(avatar, 50, 50, 200, 200);
-  ctx.restore();
-
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "40px Poppins";
-  ctx.fillText("Bienvenue sur Nancy RP", 300, 140);
-
-  ctx.font = "30px Poppins";
-  ctx.fillText(member.user.username, 300, 200);
-
-  const attachment = {
-    files: [{ attachment: canvas.toBuffer(), name: "welcome.png" }],
-  };
-
   const embed = new EmbedBuilder()
     .setColor(COLOR_SUCCESS)
-    .setTitle("🌺 Nouveau membre")
+    .setTitle("🌺 Nouveau membre — Nancy RP")
     .setDescription(
       `Bienvenue à **${member.user.username}** sur Nancy RP !\n` +
       `Nous sommes maintenant **${member.guild.memberCount}** membres.`
     )
-    .setImage("attachment://welcome.png")
+    .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
+    .setImage(NANCY_GIF)
     .setFooter(FOOTER)
     .setTimestamp();
 
-  channel.send({ embeds: [embed], files: attachment.files });
+  channel.send({ embeds: [embed] });
 });
 
-// ======================================================
-// 🟦 LEAVE — Canvas personnalisé
-// ======================================================
-
+// DÉPART
 client.on("guildMemberRemove", async (member) => {
   const channel = member.guild.channels.cache.get(LEAVE_CHANNEL_ID);
   if (!channel) return;
-
-  const canvas = Canvas.createCanvas(900, 300);
-  const ctx = canvas.getContext("2d");
-
-  // Fond stylé (celui-ci fonctionne)
-  const background = await Canvas.loadImage("https://i.imgur.com/2yaf2kS.jpeg");
-  ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
-
-  // Avatar
-  const avatar = await Canvas.loadImage(
-    member.user.displayAvatarURL({ extension: "png" })
-  );
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(150, 150, 100, 0, Math.PI * 2);
-  ctx.closePath();
-  ctx.clip();
-  ctx.drawImage(avatar, 50, 50, 200, 200);
-  ctx.restore();
-
-  // Texte stylé
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "40px Poppins";
-  ctx.fillText("Un membre nous quitte…", 300, 140);
-
-  ctx.font = "30px Poppins";
-  ctx.fillText(`${member.user.username}`, 300, 200);
-
-  const attachment = {
-    files: [{ attachment: canvas.toBuffer(), name: "leave.png" }],
-  };
 
   const embed = new EmbedBuilder()
     .setColor(COLOR_ERROR)
@@ -1034,13 +1077,13 @@ client.on("guildMemberRemove", async (member) => {
       `**${member.user.username}** a quitté Nancy RP.\n` +
       `Nous sommes maintenant **${member.guild.memberCount}** membres.`
     )
-    .setImage("attachment://leave.png")
+    .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
+    .setImage(NANCY_GIF)
     .setFooter(FOOTER)
     .setTimestamp();
 
-  channel.send({ embeds: [embed], files: attachment.files });
+  channel.send({ embeds: [embed] });
 });
-
 
 // ======================================================
 // 🟦 BLOC 10 — LOGIN FINAL + OPTIMISATIONS
