@@ -70,7 +70,7 @@ const COLOR_ERROR   = 0xe74c3c;
 const COLOR_INFO    = 0x237feb;
 
 // 🔹 Footer global personnalisé SnX
-const FOOTER = { text: "🌺 Nancy RP • Security Core by SnX" };
+const FOOTER = { text: "🌺 Nancy RP • Security" };
 
 // 🔹 Join / Leave (ADAPTÉ à tes nouveaux salons)
 const JOIN_CHANNEL_ID  = "1505943697496346725";
@@ -322,7 +322,7 @@ client.on("messageCreate", async (message) => {
           "🎁 **Giveaway**",
           "`n.giveaway <minutes> <récompense>`",
           "",
-          "🌺 *Nancy RP Security Core — by SnX*"
+          "🌺 *Nancy RP Security Core*"
         ].join("\n")
       );
 
@@ -1000,44 +1000,195 @@ client.on("interactionCreate", async (interaction) => {
 
 client.on("ready", async () => {
   console.log(`🟦 Connecté en tant que ${client.user.tag}`);
-  console.log("🟦 Synchronisation des commandes slash…");
+  console.log("🧹 Reset des commandes slash…");
 
   const CLIENT_ID = client.user.id;
   const GUILD_ID = "1472637775281918123"; // Nancy RP
 
-  const commands = [
-    { name: "help", description: "Affiche l'aide du bot Nancy RP" },
-    { name: "panel", description: "Ouvre le panel staff" },
-    { name: "raid", description: "Active le Raid Mode" },
-    { name: "unraid", description: "Désactive le Raid Mode" },
-    { name: "raidsim", description: "Simule une alerte RAID" },
-    {
-      name: "antibot",
-      description: "Active ou désactive l'anti-bot",
-      options: [
-        {
-          name: "mode",
-          description: "on / off",
-          type: 3,
-          required: true,
-          choices: [
-            { name: "on", value: "on" },
-            { name: "off", value: "off" }
-          ]
-        }
-      ]
-    }
-  ];
-
   const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
+
+  // 1️⃣ SUPPRESSION TOTALE DES COMMANDES
+  await rest.put(
+    Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
+    { body: [] }
+  );
+
+  console.log("🧹 Toutes les commandes ont été supprimées !");
+
+  // 2️⃣ RÉINSTALLATION DES COMMANDES DU BOT
+  const commands = [
+  // Aide
+  {
+    name: "help",
+    description: "Affiche l'aide du bot Nancy RP"
+  },
+
+  // Panel staff
+  {
+    name: "panel",
+    description: "Ouvre le panel staff"
+  },
+
+  // RAID MODE
+  {
+    name: "raid",
+    description: "Active le Raid Mode"
+  },
+  {
+    name: "unraid",
+    description: "Désactive le Raid Mode"
+  },
+  {
+    name: "raidsim",
+    description: "Simule une alerte RAID"
+  },
+
+  // Anti-bot
+  {
+    name: "antibot",
+    description: "Active ou désactive l'anti-bot",
+    options: [
+      {
+        name: "mode",
+        description: "on / off",
+        type: 3,
+        required: true,
+        choices: [
+          { name: "on", value: "on" },
+          { name: "off", value: "off" }
+        ]
+      }
+    ]
+  },
+
+  // Modération
+  {
+    name: "warn",
+    description: "Avertir un utilisateur",
+    options: [
+      {
+        name: "membre",
+        description: "Utilisateur à avertir",
+        type: 6,
+        required: true
+      },
+      {
+        name: "raison",
+        description: "Raison de l'avertissement",
+        type: 3,
+        required: true
+      }
+    ]
+  },
+  {
+    name: "unwarn",
+    description: "Retirer un avertissement",
+    options: [
+      {
+        name: "membre",
+        description: "Utilisateur",
+        type: 6,
+        required: true
+      }
+    ]
+  },
+  {
+    name: "warnings",
+    description: "Voir les avertissements d'un utilisateur",
+    options: [
+      {
+        name: "membre",
+        description: "Utilisateur",
+        type: 6,
+        required: true
+      }
+    ]
+  },
+  {
+    name: "mute",
+    description: "Mute un utilisateur",
+    options: [
+      {
+        name: "membre",
+        description: "Utilisateur",
+        type: 6,
+        required: true
+      },
+      {
+        name: "temps",
+        description: "Durée (ex: 10m, 1h)",
+        type: 3,
+        required: true
+      }
+    ]
+  },
+  {
+    name: "kick",
+    description: "Kick un utilisateur",
+    options: [
+      {
+        name: "membre",
+        description: "Utilisateur",
+        type: 6,
+        required: true
+      }
+    ]
+  },
+  {
+    name: "ban",
+    description: "Ban un utilisateur",
+    options: [
+      {
+        name: "membre",
+        description: "Utilisateur",
+        type: 6,
+        required: true
+      }
+    ]
+  },
+
+  // Giveaway
+  {
+    name: "giveaway",
+    description: "Créer un giveaway",
+    options: [
+      {
+        name: "prix",
+        description: "Ce que le gagnant reçoit",
+        type: 3,
+        required: true
+      },
+      {
+        name: "durée",
+        description: "Durée du giveaway (ex: 10m, 1h, 1d)",
+        type: 3,
+        required: true
+      }
+    ]
+  },
+
+  // Sauvegarde serveur
+  {
+    name: "save",
+    description: "Sauvegarde la structure du serveur (salons, rôles, catégories)"
+  },
+
+  // Restauration serveur
+  {
+    name: "load",
+    description: "Recharge la structure sauvegardée du serveur"
+  }
+];
+
 
   await rest.put(
     Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
     { body: commands }
   );
 
-  console.log("🟦 Commandes slash synchronisées !");
+  console.log("🟦 Commandes slash réinstallées !");
 });
+
 
 
 // ======================================================
