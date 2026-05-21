@@ -1,56 +1,24 @@
-const { EmbedBuilder, AttachmentBuilder } = require('discord.js');
-const fs = require('fs');
-const path = require('path');
+const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
     name: 'guildMemberAdd',
-    async execute(member, client) {
-        // Chemin vers la base de données (corrigé à la racine)
-        const dbPath = path.join(__dirname, '../../database.json');
-        let db = { raidMode: false, antibot: false };
-        
-        if (fs.existsSync(dbPath)) {
-            db = JSON.parse(fs.readFileSync(dbPath));
-        }
+    async execute(member) {
+        // ID de ton salon d'arrivée (Salon de bienvenue)
+        const channelId = "1505943699748814878"; 
+        const channel = member.guild.channels.cache.get(channelId);
 
-        // 1. Filtrage de sécurité Anti-Raid ou Anti-Bot
-        if (db.raidMode || (db.antibot && member.user.bot)) {
-            try {
-                await member.kick('Nancy Protection : Mode Anti-Raid / Anti-Bot actif');
-                if (typeof client.log === 'function') {
-                    client.log(member.guild, 'EXPULSION SÉCURITÉ', `Le membre/bot **${member.user.tag}** (${member.id}) a été expulsé automatiquement.`);
-                }
-                return;
-            } catch (e) { console.error(e); }
-        }
+        if (!channel) return;
 
-        // 2. Récupération du salon de bienvenue
-        const welcomeChannel = member.guild.channels.cache.get(client.config.welcomeChannel);
-        if (!welcomeChannel) return console.log("⚠️ Salon de bienvenue introuvable. Vérifiez l'ID dans config.json");
-
-        // Récupération du nombre total de membres sur le serveur
-        const memberCount = member.guild.memberCount;
-
-        // 3. Préparation du GIF d'arrivée (Chemin d'accès corrigé !)
-        const gifPath = path.join(__dirname, '../../asset/NANCYRP.gif');
-        const file = new AttachmentBuilder(gifPath, { name: 'welcome.gif' });
-
-        // 4. Création de l'Embed de Bienvenue Premium
-        const embed = new EmbedBuilder()
-            .setTitle(`✨ Nouvelle Arrivée ! ✨`)
-            .setDescription(
-                `Bonjour ${member} et bienvenue sur **${member.guild.name}** !\n\n` +
-                `Nous sommes ravis de t'accueillir parmi nous. Passe un excellent moment sur le serveur et n'hésite pas à poser tes questions si besoin.\n\n` +
-                `📌 *Prends quelques secondes pour lire le règlement afin d'éviter les sanctions !*`
-            )
-            .setColor(client.config.color || '#5865F2')
-            .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
-            .setImage('attachment://welcome.gif')
-            .setFooter({ text: `Membre #${memberCount} • Nancy ASSISTANCE`, iconURL: member.guild.iconURL({ dynamic: true }) })
+        const welcomeEmbed = new EmbedBuilder()
+            .setTitle(`👋 Bienvenue sur Nancy RP !`)
+            .setDescription(`Bonjour ${member} ! Nous sommes ravis de t'accueillir parmi nous.\n\n💼 **Nancy ASSISTANCE** et l'ensemble de la communauté te souhaitent une excellente intégration. Prépare ton plus beau rôleplay, l'aventure commence ici ! ✨`)
+            .setColor("#5865F2")
+            .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+            // Ton GIF personnalisé en grand format
+            .setImage("https://cdn.discordapp.com/attachments/1505943854250201118/1507075598021951508/NANCY_RP_5.gif?ex=6a109506&is=6a0f4386&hm=6939277976e0258d9492df40ca9a18992b2fbf60a9c1e39c1317a5e270655375&")
+            .setFooter({ text: `Nancy ASSISTANCE • Nous sommes désormais ${member.guild.memberCount} citoyens !` })
             .setTimestamp();
 
-        // Envoi groupé
-        welcomeChannel.send({ content: `👋 Bienvenue ${member} !`, embeds: [embed], files: [file] })
-            .catch(err => console.error("Impossible d'envoyer le message d'arrivée:", err));
-    },
+        await channel.send({ content: `## 🎉 Un nouveau citoyen est arrivé ! \nBienvenue à toi ${member} !`, embeds: [welcomeEmbed] });
+    }
 };
