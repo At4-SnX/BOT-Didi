@@ -94,38 +94,113 @@ client.log = async (guild, title, description, color = config.color) => {
 // 7. Connexion du bot
 client.login(config.token);
 
-// ==================== SYSTÈME D'ARRIVÉE ET DÉPART FORCÉ ====================
-client.on('guildMemberAdd', async (member) => {
-    const channelId = "1505943699748814878"; // ID de ton salon d'arrivée
+// On s'assure d'importer Canvas tout en haut ou juste ici
+const Canvas = require('canvas');
+
+// ==================== SYSTÈME DE BIENVENUE CANVAS ====================
+client.on("guildMemberAdd", async (member) => {
+    const channelId = "1505943699748814878"; // Ton salon d'arrivée
     const channel = member.guild.channels.cache.get(channelId);
     if (!channel) return;
 
-    const welcomeEmbed = new EmbedBuilder()
-        .setTitle(`👋 Bienvenue sur Nancy RP !`)
-        .setDescription(`Bonjour ${member} ! Nous sommes ravis de t'accueillir parmi nous.\n\n💼 **Nancy ASSISTANCE** et l'ensemble de la communauté te souhaitent une excellente intégration. Prépare ton plus beau rôleplay, l'aventure commence ici ! ✨`)
-        .setColor("#5865F2")
-        .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
-        .setImage("https://i.imgur.com/B9OOniM.gif")
-        .setFooter({ text: `Nancy ASSISTANCE • Nous sommes désormais ${member.guild.memberCount} citoyens !` })
-        .setTimestamp();
+    try {
+        const canvas = Canvas.createCanvas(900, 300);
+        const ctx = canvas.getContext("2d");
 
-    await channel.send({ content: `## 🎉 Un nouveau citoyen est arrivé ! \nBienvenue à toi ${member} !`, embeds: [welcomeEmbed] }).catch(console.error);
+        // Chargement du fond depuis ton lien Imgur direct
+        const background = await Canvas.loadImage("https://i.imgur.com/yo7PUTc.png");
+        ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+
+        // Chargement et découpe de l'avatar en cercle
+        const avatar = await Canvas.loadImage(
+            member.user.displayAvatarURL({ extension: "png", size: 256 })
+        );
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(150, 150, 100, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(avatar, 50, 50, 200, 200);
+        ctx.restore();
+
+        // Ajout des textes
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "40px sans-serif"; // "sans-serif" évite les bugs si Poppins n'est pas installée sur Railway
+        ctx.fillText("Bienvenue sur Nancy RP", 300, 140);
+
+        ctx.font = "30px sans-serif";
+        ctx.fillText(member.user.username, 300, 200);
+
+        const attachment = canvas.toBuffer();
+
+        const embed = new EmbedBuilder()
+            .setColor("#5865F2")
+            .setTitle("🌺 Nouveau membre")
+            .setDescription(`Bienvenue à **${member}** sur Nancy RP !\nNous sommes maintenant **${member.guild.memberCount}** citoyens. ✨`)
+            .setImage("attachment://welcome.png")
+            .setFooter({ text: "Nancy ASSISTANCE" })
+            .setTimestamp();
+
+        await channel.send({ 
+            embeds: [embed], 
+            files: [{ attachment: attachment, name: "welcome.png" }] 
+        });
+
+    } catch (error) {
+        console.error("Erreur Canvas Arrivée :", error);
+    }
 });
 
-client.on('guildMemberRemove', async (member) => {
-    const channelId = "1505943699748814878"; // ID de ton salon de départ
+// ==================== SYSTÈME DE DÉPART CANVAS ====================
+client.on("guildMemberRemove", async (member) => {
+    const channelId = "1505943699748814878"; // Ton salon de départ
     const channel = member.guild.channels.cache.get(channelId);
     if (!channel) return;
 
-    const leaveEmbed = new EmbedBuilder()
-        .setTitle(`😢 Un citoyen nous quitte...`)
-        .setDescription(`**${member.user.tag}** a pris ses bagages et vient de quitter le territoire de Nancy RP.\n\nToute l'équipe de **Nancy ASSISTANCE** lui souhaite une bonne continuation dans ses futurs projets. Sa carte de citoyen a été archivée. 🗃️`)
-        .setColor("#FF3333")
-        .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
-        .setImage("https://i.imgur.com/B9OOniM.gif")
-        .setFooter({ text: `Nancy ASSISTANCE • Il reste ${member.guild.memberCount} citoyens en ville.` })
-        .setTimestamp();
+    try {
+        const canvas = Canvas.createCanvas(900, 300);
+        const ctx = canvas.getContext("2d");
 
-    await channel.send({ embeds: [leaveEmbed] }).catch(console.error);
+        // Même fond Imgur
+        const background = await Canvas.loadImage("https://i.imgur.com/yo7PUTc.png");
+        ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+
+        const avatar = await Canvas.loadImage(
+            member.user.displayAvatarURL({ extension: "png", size: 256 })
+        );
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(150, 150, 100, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(avatar, 50, 50, 200, 200);
+        ctx.restore();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "40px sans-serif";
+        ctx.fillText("Un membre nous quitte…", 300, 140);
+
+        ctx.font = "30px sans-serif";
+        ctx.fillText(member.user.username, 300, 200);
+
+        const attachment = canvas.toBuffer();
+
+        const embed = new EmbedBuilder()
+            .setColor("#FF3333")
+            .setTitle("💨 Départ d’un membre")
+            .setDescription(`**${member.user.username}** a quitté Nancy RP.\nIl reste **${member.guild.memberCount}** citoyens en ville. 🗃️`)
+            .setImage("attachment://leave.png")
+            .setFooter({ text: "Nancy ASSISTANCE" })
+            .setTimestamp();
+
+        await channel.send({ 
+            embeds: [embed], 
+            files: [{ attachment: attachment, name: "leave.png" }] 
+        });
+
+    } catch (error) {
+        console.error("Erreur Canvas Départ :", error);
+    }
 });
-// ===========================================================================
