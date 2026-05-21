@@ -1000,240 +1000,26 @@ client.on("interactionCreate", async (interaction) => {
 
 client.on("ready", async () => {
   console.log(`🟦 Connecté en tant que ${client.user.tag}`);
-  console.log("🧹 Reset des commandes slash…");
-
   const CLIENT_ID = client.user.id;
-  const GUILD_ID = "1472637775281918123"; // Nancy RP
+  const GUILD_ID = "1472637775281918123"; // vérifie bien que c'est Nancy RP
 
   const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
-  // 1️⃣ SUPPRESSION TOTALE DES COMMANDES
+  // 1) Supprime TOUTES les commandes GLOBAL du bot
+  await rest.put(
+    Routes.applicationCommands(CLIENT_ID),
+    { body: [] }
+  );
+  console.log("🧹 Commandes GLOBAL du bot supprimées");
+
+  // 2) Supprime TOUTES les commandes du bot dans TON serveur
   await rest.put(
     Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
     { body: [] }
   );
-
-  console.log("🧹 Toutes les commandes ont été supprimées !");
-
-  // 2️⃣ RÉINSTALLATION DES COMMANDES DU BOT
-  const commands = [
-  // Aide
-  {
-    name: "help",
-    description: "Affiche l'aide du bot Nancy RP"
-  },
-
-  // Panel staff
-  {
-    name: "panel",
-    description: "Ouvre le panel staff"
-  },
-
-  // RAID MODE
-  {
-    name: "raid",
-    description: "Active le Raid Mode"
-  },
-  {
-    name: "unraid",
-    description: "Désactive le Raid Mode"
-  },
-  {
-    name: "raidsim",
-    description: "Simule une alerte RAID"
-  },
-
-  // Anti-bot
-  {
-    name: "antibot",
-    description: "Active ou désactive l'anti-bot",
-    options: [
-      {
-        name: "mode",
-        description: "on / off",
-        type: 3,
-        required: true,
-        choices: [
-          { name: "on", value: "on" },
-          { name: "off", value: "off" }
-        ]
-      }
-    ]
-  },
-
-  // Modération
-  {
-    name: "warn",
-    description: "Avertir un utilisateur",
-    options: [
-      {
-        name: "membre",
-        description: "Utilisateur à avertir",
-        type: 6,
-        required: true
-      },
-      {
-        name: "raison",
-        description: "Raison de l'avertissement",
-        type: 3,
-        required: true
-      }
-    ]
-  },
-  {
-    name: "unwarn",
-    description: "Retirer un avertissement",
-    options: [
-      {
-        name: "membre",
-        description: "Utilisateur",
-        type: 6,
-        required: true
-      }
-    ]
-  },
-  {
-    name: "warnings",
-    description: "Voir les avertissements d'un utilisateur",
-    options: [
-      {
-        name: "membre",
-        description: "Utilisateur",
-        type: 6,
-        required: true
-      }
-    ]
-  },
-  {
-    name: "mute",
-    description: "Mute un utilisateur",
-    options: [
-      {
-        name: "membre",
-        description: "Utilisateur",
-        type: 6,
-        required: true
-      },
-      {
-        name: "temps",
-        description: "Durée (ex: 10m, 1h)",
-        type: 3,
-        required: true
-      }
-    ]
-  },
-  {
-    name: "kick",
-    description: "Kick un utilisateur",
-    options: [
-      {
-        name: "membre",
-        description: "Utilisateur",
-        type: 6,
-        required: true
-      }
-    ]
-  },
-  {
-    name: "ban",
-    description: "Ban un utilisateur",
-    options: [
-      {
-        name: "membre",
-        description: "Utilisateur",
-        type: 6,
-        required: true
-      }
-    ]
-  },
-
-  // Giveaway
-  {
-    name: "giveaway",
-    description: "Créer un giveaway",
-    options: [
-      {
-        name: "prix",
-        description: "Ce que le gagnant reçoit",
-        type: 3,
-        required: true
-      },
-      {
-        name: "durée",
-        description: "Durée du giveaway (ex: 10m, 1h, 1d)",
-        type: 3,
-        required: true
-      }
-    ]
-  },
-
-  // Sauvegarde serveur
-  {
-    name: "save",
-    description: "Sauvegarde la structure du serveur (salons, rôles, catégories)"
-  },
-
-  // Restauration serveur
-  {
-    name: "load",
-    description: "Recharge la structure sauvegardée du serveur"
-  }
-];
-
-
-  await rest.put(
-    Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
-    { body: commands }
-  );
-
-  console.log("🟦 Commandes slash réinstallées !");
+  console.log("🧹 Commandes GUILDE du bot supprimées");
 });
 
-
-
-// ======================================================
-// 🟦 JOIN — Canvas personnalisé
-// ======================================================
-
-// ARRIVÉE
-client.on("guildMemberAdd", async (member) => {
-  const channel = member.guild.channels.cache.get(JOIN_CHANNEL_ID);
-  if (!channel) return;
-
-  const embed = new EmbedBuilder()
-    .setColor(COLOR_SUCCESS)
-    .setTitle("🌺 Nouveau membre — Nancy RP")
-    .setDescription(
-      `Bienvenue à **${member.user.username}** sur Nancy RP !\n` +
-      `Nous sommes maintenant **${member.guild.memberCount}** membres.`
-    )
-    .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
-    .setImage(NANCY_GIF)
-    .setFooter(FOOTER)
-    .setTimestamp();
-
-  channel.send({ embeds: [embed] });
-});
-
-// DÉPART
-client.on("guildMemberRemove", async (member) => {
-  const channel = member.guild.channels.cache.get(LEAVE_CHANNEL_ID);
-  if (!channel) return;
-
-  const embed = new EmbedBuilder()
-    .setColor(COLOR_ERROR)
-    .setTitle("💨 Départ d’un membre")
-    .setDescription(
-      `**${member.user.username}** a quitté Nancy RP.\n` +
-      `Nous sommes maintenant **${member.guild.memberCount}** membres.`
-    )
-    .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
-    .setImage(NANCY_GIF)
-    .setFooter(FOOTER)
-    .setTimestamp();
-
-  channel.send({ embeds: [embed] });
-});
 
 // ======================================================
 // 🟦 BLOC 10 — LOGIN FINAL + OPTIMISATIONS
